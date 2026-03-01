@@ -60,23 +60,20 @@ async function InsertSongInHistory(song_id: string) {
 }
 
 
-async function GetSongHistory() : Promise<SongDetails[]> {
+export async function GetSongHistory() : Promise<SongDetails[]> {
     const result = await db.getAllAsync<any>(`
         SELECT S.* 
         FROM history AS H
         INNER JOIN song AS S
         ON H.song_played_id = S.id
+        ORDER BY H.id DESC
         `)
 
-    console.log(result)
-    
     let AllHistory: SongDetails[] = []
     
     for (const row of result) {
         const song: SongDetails = {title: row.title, description: row.description, id: row.song_id, image: row.image_url, media_url: ""}
         AllHistory.push(song)
     }
-    // console.log(AllHistory)
-
     return AllHistory
 }

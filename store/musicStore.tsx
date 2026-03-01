@@ -18,6 +18,7 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
     isPlaying: false,
 
     setSong: async (song) => {
+        set({ currentSong: song })
         const { sound: currentSound } = get();
 
         // Kill existing sound immediately

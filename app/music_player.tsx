@@ -20,7 +20,6 @@ export default function MusicPlayer() {
     if (!currentSong) return null;
 
     useEffect(() => {
-        InsertSong(currentSong.title, currentSong.description, currentSong.id, currentSong.media_url)
         const interval = setInterval(async () => {
             if (sound) {
                 const status = await sound.getStatusAsync();

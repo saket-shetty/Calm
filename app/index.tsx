@@ -6,6 +6,7 @@ import Homepage from "./homepage";
 import Playlist from "./playlist";
 import { CreateDatabase } from "../database/initialize_db"
 import { useMusicStore } from "@/store/musicStore";
+import History from "./history";
 
 const Tab = createBottomTabNavigator();
 
@@ -40,7 +41,7 @@ export default function Index() {
                 }}
             />
 
-            <Tab.Screen name="Playlist" component={Playlist}
+            <Tab.Screen name="Playlist" component={History}
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="book" size={size} color={color} />
