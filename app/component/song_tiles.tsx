@@ -15,7 +15,6 @@ export default function SongTiles({ songList }: { songList: SongDetails[] }) {
 
     const playSong = async (song: SongDetails) => {
         if (!loadingSong) {
-            // setSongClicked(song)
             setLoadingSong(true)
             const mediaUrl = await SearchSongDetailsByID(song.id);
             const storeSong = useMusicStore.getState().currentSong;
@@ -26,7 +25,6 @@ export default function SongTiles({ songList }: { songList: SongDetails[] }) {
                 return;
             }
 
-            // Otherwise, load new song
             await setSong({ ...song, media_url: mediaUrl });
             if (song) {
                 InsertSong(song.title, song.description, song.id, song.image)

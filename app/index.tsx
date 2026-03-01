@@ -1,28 +1,36 @@
 import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Audio, InterruptionModeAndroid } from "expo-av";
+import { AudioModule } from "expo-audio";
 import { useEffect } from "react";
 import Homepage from "./homepage";
-import Playlist from "./playlist";
 import { CreateDatabase } from "../database/initialize_db"
 import { useMusicStore } from "@/store/musicStore";
 import History from "./history";
+import * as Notifications from 'expo-notifications';
+import { useKeepAwake } from 'expo-keep-awake';
 
 const Tab = createBottomTabNavigator();
 
 export default function Index() {
-
     const reset = useMusicStore((state) => state.reset);
+
+    useKeepAwake();
 
     useEffect(() => {
         const setup = async () => {
-            await Audio.setAudioModeAsync({
-                staysActiveInBackground: true,
-                playsInSilentModeIOS: true,
-                interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-                shouldDuckAndroid: true,
+
+            const { status } = await Notifications.requestPermissionsAsync();
+
+            if (status !== 'granted') {
+                console.log('Background audio will fail without notification permissions');
+            }
+
+            await AudioModule.setAudioModeAsync({
+                playsInSilentMode: true,
+                interruptionMode: "duckOthers",
+                shouldPlayInBackground: true,
             });
-            await CreateDatabase()
+            await CreateDatabase();
         };
         reset();
         setup();

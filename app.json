@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +26,17 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.anonymous.Calm",
-      "permissions": ["WAKE_LOCK", "FOREGROUND_SERVICE"]
+      "permissions": [
+        "WAKE_LOCK",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "POST_NOTIFICATIONS"
+      ],
+      "intentFilters": [
+        {
+          "action": "android.intent.action.MEDIA_BUTTON"
+        }
+      ]
     },
     "web": {
       "output": "static",
@@ -29,6 +44,13 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true,
+          "androidServiceType": "mediaPlayback"
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -40,7 +62,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,

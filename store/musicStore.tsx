@@ -1,15 +1,15 @@
-import { Audio, AVPlaybackStatus } from "expo-av";
+import { createAudioPlayer, AudioModule, AudioPlayer } from "expo-audio";
 import { create } from "zustand";
 import { SongDetails } from "../script/media_player_helper";
 
 interface MusicStore {
     currentSong: SongDetails | null;
-    sound: Audio.Sound | null;
+    sound: AudioPlayer | null;
     isPlaying: boolean;
-    setSong: (song: SongDetails) => Promise<void>;
-    play: () => Promise<void>;
-    pause: () => Promise<void>;
-    reset: () => Promise<void>;
+    setSong: (song: SongDetails) => void;
+    play: () => void;
+    pause: () => void;
+    reset: () => void;
 }
 
 export const useMusicStore = create<MusicStore>((set, get) => ({
@@ -17,58 +17,57 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
     sound: null,
     isPlaying: false,
 
-    setSong: async (song) => {
-        set({ currentSong: song })
+    setSong: async (song: SongDetails) => {
         const { sound: currentSound } = get();
-
-        // Kill existing sound immediately
         if (currentSound) {
-            try {
-                await currentSound.unloadAsync();
-            } catch (e) { }
+            currentSound.release();
         }
 
-        try {
-            // Configure audio mode BEFORE creating the sound
-            await Audio.setAudioModeAsync({
-                playsInSilentModeIOS: true,
-                staysActiveInBackground: true,
-                shouldDuckAndroid: true,
-            });
+        await AudioModule.setAudioModeAsync({
+            playsInSilentMode: true,
+            interruptionMode: "doNotMix",
+            shouldPlayInBackground: true,
+        });
 
-            const { sound: newSound } = await Audio.Sound.createAsync(
-                { uri: song.media_url },
-                { shouldPlay: true },
-                (status: AVPlaybackStatus) => {
-                    if (status.isLoaded) {
-                        set({ isPlaying: status.isPlaying });
-                    }
-                }
-            );
+        const player = createAudioPlayer(song.media_url);
 
-            set({ currentSong: song, sound: newSound, isPlaying: true });
-        } catch (error) {
-            console.error("Load Error:", error);
-        }
+        (player as any).setActiveForLockScreen(true, {
+            title: song.title,
+            artist: song.description,
+            albumTitle: "Calm",
+            artworkUrl: song.image.replaceAll("50x50.jpg", "500x500.jpg") // optional
+        });
+
+        player.play();
+
+        set({
+            currentSong: song,
+            sound: player,
+            isPlaying: true,
+        });
     },
 
-    play: async () => {
-        const { sound } = get();
-        if (sound) await sound.playAsync();
-    },
-
-    pause: async () => {
-        const { sound } = get();
-        if (sound) await sound.pauseAsync();
-    },
-
-    reset: async () => {
+    play: () => {
         const { sound } = get();
         if (sound) {
-            try {
-                await sound.stopAsync();
-                await sound.unloadAsync();
-            } catch (e) { }
+            sound.play();
+            set({ isPlaying: true });
+        }
+    },
+
+    pause: () => {
+        const { sound } = get();
+        if (sound) {
+            sound.pause();
+            set({ isPlaying: false });
+        }
+    },
+
+    reset: () => {
+        const { sound } = get();
+        if (sound) {
+            sound.pause();
+            sound.release();
         }
         set({ currentSong: null, sound: null, isPlaying: false });
     },
