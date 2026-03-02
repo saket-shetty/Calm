@@ -2,20 +2,44 @@ import { InsertSong } from "@/database/initialize_db";
 import { SearchSongDetailsByID, SongDetails } from "@/script/media_player_helper";
 import { useMusicStore } from "@/store/musicStore";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { List } from "react-native-paper";
 
 
-export default function SongTiles({ songList, displayBanner = true }: { songList: SongDetails[], displayBanner: boolean }) {
+export default function SongTiles({ songList, displayBanner = true, autoplay = false }: { songList: SongDetails[], displayBanner: boolean, autoplay: boolean }) {
     const [loadingSong, setLoadingSong] = useState<boolean>(false);
+    const [currentSongIndex, setCurrentSongIndex] = useState<number>(0);
 
     const currentSong = useMusicStore((state) => state.currentSong);
     const setSong = useMusicStore((state) => state.setSong);
+    const sound = useMusicStore((state) => state.sound);
+    const loadingRef = useRef(loadingSong);
 
-    const playSong = async (song: SongDetails) => {
-        if (!loadingSong) {
-            setLoadingSong(true)
+    useEffect(() => {
+        loadingRef.current = loadingSong;
+    }, [loadingSong]);
+
+    useEffect(() => {
+        if (!autoplay) return
+        const interval = setInterval(() => {
+            if (!loadingRef.current && sound && sound.currentTime >= sound.duration) {
+                if (songList[currentSongIndex + 1]) {
+                    playSong(songList[currentSongIndex + 1], currentSongIndex + 1, true);
+                }
+            }
+        }, 500);
+
+        return () => clearInterval(interval);
+    }, [sound, currentSongIndex]);
+
+    const playSong = async (song: SongDetails, i: number, autoplay: boolean = false) => {
+        if (loadingRef.current) return;
+
+        setCurrentSongIndex(i);
+        setLoadingSong(true);
+
+        try {
             const mediaUrl = await SearchSongDetailsByID(song.id);
             const storeSong = useMusicStore.getState().currentSong;
             // If the song is already playing, just navigate to the player
@@ -29,7 +53,13 @@ export default function SongTiles({ songList, displayBanner = true }: { songList
             if (song) {
                 InsertSong(song.title, song.description, song.id, song.image)
             }
-            router.push({ pathname: "/music_player" });
+
+            if (!autoplay) {
+                router.push({ pathname: "/music_player" });
+            }
+        } catch (error) {
+            console.error("Failed to play song:", error);
+        } finally {
             setLoadingSong(false);
         }
     };
@@ -45,7 +75,7 @@ export default function SongTiles({ songList, displayBanner = true }: { songList
                             title={song.title}
                             description={song.description}
                             left={() => <Image source={{ uri: song.image }} style={{ width: 60, height: 60 }} />}
-                            onPress={() => playSong(song)}
+                            onPress={() => playSong(song, i)}
                             titleNumberOfLines={1}
                             descriptionNumberOfLines={1}
                             style={styles.songDetailContainer}

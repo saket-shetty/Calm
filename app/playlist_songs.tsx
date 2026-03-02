@@ -46,7 +46,7 @@ export default function PlaylistSongs() {
 
     return (
         <View style={{ flex: 1, paddingBottom: insets.bottom }}>
-            <SongTiles songList={songsList} displayBanner={false} />
+            <SongTiles songList={songsList} displayBanner={true} autoplay={playlistName !== "History"} />
         </View>
     )
 }
