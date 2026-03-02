@@ -17,7 +17,7 @@ export default function Playlist() {
                     descriptionNumberOfLines={1}
                     style={styles.container}
                     titleStyle={styles.containerText}
-                    onPress={() => { router.push({ pathname: "/playlist_songs", params:{playlistName: playlist.toLowerCase()} }); }}
+                    onPress={() => { router.push({ pathname: "/playlist_songs", params:{playlistName: playlist} }); }}
                 />
             ))
             }

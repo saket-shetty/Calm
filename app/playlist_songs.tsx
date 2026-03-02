@@ -5,6 +5,8 @@ import SongTiles from "./component/song_tiles"
 import { useFocusEffect, useLocalSearchParams } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { View } from "react-native"
+import { useNavigation } from "@react-navigation/native";
+
 
 export default function PlaylistSongs() {
 
@@ -13,6 +15,8 @@ export default function PlaylistSongs() {
     const { playlistName } = useLocalSearchParams();
 
     const [songsList, setSongsList] = useState<SongDetails[]>([])
+
+    const navigation = useNavigation();
 
 
     const GetHistory = async () => {
@@ -26,10 +30,14 @@ export default function PlaylistSongs() {
     }
 
     useFocusEffect(() => {
+        navigation.setOptions({ title: playlistName })
+
+        const PlaylistName: string = (playlistName as string)
+
         const setup = async () => {
-            if (playlistName === "history") {
+            if (PlaylistName.toLowerCase() === "history") {
                 await GetHistory()
-            } else if (playlistName === "most played") {
+            } else if (PlaylistName.toLowerCase() === "most played") {
                 await GetMPSong()
             }
         };
@@ -37,8 +45,8 @@ export default function PlaylistSongs() {
     });
 
     return (
-        <View style={{flex: 1, paddingBottom: insets.bottom}}>
-        <SongTiles songList={songsList} displayBanner={false} />
+        <View style={{ flex: 1, paddingBottom: insets.bottom }}>
+            <SongTiles songList={songsList} displayBanner={false} />
         </View>
     )
 }
