@@ -77,3 +77,25 @@ export async function GetSongHistory() : Promise<SongDetails[]> {
     }
     return AllHistory
 }
+
+
+export async function GetMostPlayedSong() : Promise<SongDetails[]> {
+    const result = await db.getAllAsync<any>(`
+            SELECT S.id, S.title, S.description, S.song_id, S.image_url, COUNT(1) AS C
+            FROM song AS S
+            INNER JOIN history AS H
+            ON S.id = H.song_played_id
+            GROUP BY S.id, S.title, S.description, S.song_id, S.image_url
+            ORDER BY COUNT(1) DESC
+        `)
+
+    let AllHistory: SongDetails[] = []
+
+    console.log(result)
+    
+    for (const row of result) {
+        const song: SongDetails = {title: row.title, description: row.description, id: row.song_id, image: row.image_url, media_url: ""}
+        AllHistory.push(song)
+    }
+    return AllHistory
+}

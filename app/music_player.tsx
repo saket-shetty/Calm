@@ -87,7 +87,7 @@ export default function MusicPlayer() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#121212",
+        backgroundColor: "#1B263B",
         alignItems: "center",
         justifyContent: "center",
         padding: 20,

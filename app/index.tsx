@@ -5,9 +5,9 @@ import { useEffect } from "react";
 import Homepage from "./homepage";
 import { CreateDatabase } from "../database/initialize_db"
 import { useMusicStore } from "@/store/musicStore";
-import History from "./history";
 import * as Notifications from 'expo-notifications';
 import { useKeepAwake } from 'expo-keep-awake';
+import Playlist from "./playlist";
 
 const Tab = createBottomTabNavigator();
 
@@ -38,24 +38,24 @@ export default function Index() {
 
     return (
         <Tab.Navigator>
-            <Tab.Screen name="Calm" component={Homepage}
+            <Tab.Screen name="Calm" component={Homepage} 
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="musical-note" size={size} color={color} />
                     ),
-                    headerStyle: { backgroundColor: "black" },
-                    headerTitleStyle: { color: "white" },
+                    headerStyle: { backgroundColor: "#0D1B2A" },
+                    headerTitleStyle: { color: "#E0E1DD" },
                     headerTitleAlign: "center"
                 }}
             />
 
-            <Tab.Screen name="Playlist" component={History}
+            <Tab.Screen name="Playlist" component={Playlist}
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="book" size={size} color={color} />
                     ),
-                    headerStyle: { backgroundColor: "black" },
-                    headerTitleStyle: { color: "white" },
+                    headerStyle: { backgroundColor: "#0D1B2A" },
+                    headerTitleStyle: { color: "#E0E1DD" },
                     headerTitleAlign: "center"
                 }}
             />

@@ -1,8 +1,6 @@
-import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, TextInput, View } from "react-native";
-import { SearchSong, SearchSongDetailsByID, SongDetails } from "../script/media_player_helper";
-import { useMusicStore } from "../store/musicStore";
+import { SearchSong, SongDetails } from "../script/media_player_helper";
 import SongTiles from "./component/song_tiles";
 
 export default function Homepage() {

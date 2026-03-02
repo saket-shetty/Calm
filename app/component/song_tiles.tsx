@@ -7,7 +7,7 @@ import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacit
 import { List } from "react-native-paper";
 
 
-export default function SongTiles({ songList }: { songList: SongDetails[] }) {
+export default function SongTiles({ songList, displayBanner = true }: { songList: SongDetails[], displayBanner: boolean }) {
     const [loadingSong, setLoadingSong] = useState<boolean>(false);
 
     const currentSong = useMusicStore((state) => state.currentSong);
@@ -54,7 +54,7 @@ export default function SongTiles({ songList }: { songList: SongDetails[] }) {
                 </ScrollView>
             </View>
 
-            {currentSong && (
+            {currentSong && displayBanner && (
                 <TouchableOpacity
                     style={styles.nowPlayingBanner}
                     onPress={() => router.push({ pathname: "/music_player" })}
