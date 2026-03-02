@@ -5,7 +5,7 @@ import { List } from "react-native-paper";
 
 export default function Playlist() {
 
-    const [playlists, setPlaylists] = useState(["History", "Most Played"])
+    const [playlists, setPlaylists] = useState(["History", "Most Played", "Favourites"])
 
     return (
         <ScrollView>

@@ -1,4 +1,4 @@
-import { GetMostPlayedSong, GetSongHistory } from "@/database/initialize_db"
+import { GetAllFavouriteSongs, GetMostPlayedSong, GetSongHistory } from "@/database/initialize_db"
 import { SongDetails } from "@/script/media_player_helper"
 import { useState } from "react"
 import SongTiles from "./component/song_tiles"
@@ -29,6 +29,11 @@ export default function PlaylistSongs() {
         setSongsList(songs)
     }
 
+    const GetFavSongs = async () => {
+        const songs: SongDetails[] = await GetAllFavouriteSongs()
+        setSongsList(songs)
+    }
+
     useFocusEffect(() => {
         navigation.setOptions({ title: playlistName })
 
@@ -39,6 +44,8 @@ export default function PlaylistSongs() {
                 await GetHistory()
             } else if (PlaylistName.toLowerCase() === "most played") {
                 await GetMPSong()
+            } else if (PlaylistName.toLowerCase() === "favourites") {
+                await GetFavSongs()
             }
         };
         setup();

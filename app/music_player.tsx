@@ -1,3 +1,4 @@
+import { IsSongFavourite, SetFavouriteSong } from "@/database/initialize_db";
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import React, { useEffect, useRef, useState } from "react";
@@ -13,7 +14,10 @@ export default function MusicPlayer() {
 
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(1);
+    const [isFavourite, setIsFavourite] = useState(false);
     const wasPlayingRef = useRef(false);
+
+    if (!currentSong) return null;
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -26,6 +30,16 @@ export default function MusicPlayer() {
         return () => clearInterval(interval);
     }, [sound]);
 
+    useEffect(()=> {
+        GetFavouriteDetail()
+    })
+
+    async function GetFavouriteDetail() {
+        if (!currentSong) return
+        let x = await IsSongFavourite(currentSong.id)
+        setIsFavourite(x)
+    }
+
     const togglePlay = () => {
         if (!sound) return;
         isPlaying ? pause() : play();
@@ -37,8 +51,6 @@ export default function MusicPlayer() {
         const seconds = totalSeconds % 60;
         return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
     };
-
-    if (!currentSong) return null;
 
     return (
         <View style={styles.container}>
@@ -73,13 +85,24 @@ export default function MusicPlayer() {
                 <Text style={styles.time}>{formatTime(duration)}</Text>
             </View>
 
-            <TouchableOpacity style={styles.playButton} onPress={togglePlay}>
-                <Ionicons 
-                    name={isPlaying ? "pause" : "play"} 
-                    size={30} 
-                    color={"black"} 
-                />
-            </TouchableOpacity>
+            <View style={styles.mediaControlRow}>
+                <TouchableOpacity style={styles.playButton} onPress={togglePlay}>
+                    <Ionicons
+                        name={isPlaying ? "pause" : "play"}
+                        size={30}
+                        color={"black"}
+                    />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.playButton} onPress={()=> SetFavouriteSong(currentSong.id)}>
+                    <Ionicons
+                        name={isFavourite ? "heart" : "heart-outline"}
+                        size={30}
+                        color={"red"}
+                        selectionColor={"pink"}
+                    />
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -96,6 +119,7 @@ const styles = StyleSheet.create({
     title: { color: "white", fontSize: 22, fontWeight: "bold", marginTop: 20 },
     artist: { color: "#aaa", fontSize: 16, marginTop: 5 },
     timeRow: { width: "100%", flexDirection: "row", justifyContent: "space-between", marginTop: 5 },
+    mediaControlRow: { width: "100%", flexDirection: "row", justifyContent: "space-around", marginTop: 5 },
     time: { color: "#aaa", fontSize: 12 },
     playButton: {
         marginTop: 30,
@@ -105,5 +129,6 @@ const styles = StyleSheet.create({
         borderRadius: 35,
         alignItems: "center",
         justifyContent: "center",
+        color: "pink"
     },
 });

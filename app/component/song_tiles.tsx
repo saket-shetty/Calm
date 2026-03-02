@@ -1,6 +1,7 @@
 import { InsertSong } from "@/database/initialize_db";
 import { SearchSongDetailsByID, SongDetails } from "@/script/media_player_helper";
 import { useMusicStore } from "@/store/musicStore";
+import { AudioStatus } from "expo-audio";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -21,16 +22,21 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
     }, [loadingSong]);
 
     useEffect(() => {
-        if (!autoplay) return
-        const interval = setInterval(() => {
-            if (!loadingRef.current && sound && sound.currentTime >= sound.duration) {
-                if (songList[currentSongIndex + 1]) {
-                    playSong(songList[currentSongIndex + 1], currentSongIndex + 1, true);
-                }
-            }
-        }, 500);
+        if (!sound) return;
 
-        return () => clearInterval(interval);
+        const handleSongEnd = (s: AudioStatus) => {
+            if (!s.didJustFinish) return
+            const nextIndex = currentSongIndex + 1;
+            if (songList[nextIndex] && !loadingRef.current) {
+                playSong(songList[nextIndex], nextIndex, true);
+            }
+        };
+
+        sound.addListener('playbackStatusUpdate', handleSongEnd)
+
+        return () => {
+            sound.removeListener('playbackStatusUpdate', handleSongEnd);
+        };
     }, [sound, currentSongIndex]);
 
     const playSong = async (song: SongDetails, i: number, autoplay: boolean = false) => {
@@ -40,7 +46,6 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
         setLoadingSong(true);
 
         try {
-            const mediaUrl = await SearchSongDetailsByID(song.id);
             const storeSong = useMusicStore.getState().currentSong;
             // If the song is already playing, just navigate to the player
             if (storeSong && storeSong.id === song.id) {
@@ -49,11 +54,15 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
                 return;
             }
 
+            let mediaUrl: string = song.media_url
+            if (mediaUrl === "") {
+                mediaUrl = await SearchSongDetailsByID(song.id);
+            }
             await setSong({ ...song, media_url: mediaUrl });
             if (song) {
-                InsertSong(song.title, song.description, song.id, song.image)
+                InsertSong(song.title, song.description, song.id, song.image, mediaUrl)
             }
-
+            
             if (!autoplay) {
                 router.push({ pathname: "/music_player" });
             }
