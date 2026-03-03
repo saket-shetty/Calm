@@ -25,7 +25,7 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
         if (!sound) return;
 
         const handleSongEnd = (s: AudioStatus) => {
-            if (!s.didJustFinish) return
+            if (!s.didJustFinish || !autoplay) return
             const nextIndex = currentSongIndex + 1;
             if (songList[nextIndex] && !loadingRef.current) {
                 playSong(songList[nextIndex], nextIndex, true);
@@ -58,7 +58,7 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
             if (mediaUrl === "") {
                 mediaUrl = await SearchSongDetailsByID(song.id);
             }
-            await setSong({ ...song, media_url: mediaUrl });
+            setSong({ ...song, media_url: mediaUrl });
             if (song) {
                 InsertSong(song.title, song.description, song.id, song.image, mediaUrl)
             }

@@ -1,4 +1,4 @@
-import { createAudioPlayer, AudioModule, AudioPlayer } from "expo-audio";
+import { AudioModule, AudioPlayer, createAudioPlayer } from "expo-audio";
 import { create } from "zustand";
 import { SongDetails } from "../script/media_player_helper";
 
@@ -17,25 +17,21 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
     sound: null,
     isPlaying: false,
 
-    setSong: async (song: SongDetails) => {
-        const { sound: currentSound } = get();
-        if (currentSound) {
-            currentSound.release();
+    setSong: (song: SongDetails) => {
+        const { sound: previousSound } = get();
+
+        if (previousSound) {
+            previousSound.pause();
+            previousSound.release();
         }
 
-        await AudioModule.setAudioModeAsync({
-            playsInSilentMode: true,
-            interruptionMode: "doNotMix",
-            shouldPlayInBackground: true,
-        });
-
         const player = createAudioPlayer(song.media_url);
-
-        (player as any).setActiveForLockScreen(true, {
+        
+        player.setActiveForLockScreen(true, {
             title: song.title,
             artist: song.description,
             albumTitle: "Calm",
-            artworkUrl: song.image.replaceAll("50x50.jpg", "500x500.jpg") // optional
+            artworkUrl: song.image?.replace("50x50.jpg", "500x500.jpg")
         });
 
         player.play();
