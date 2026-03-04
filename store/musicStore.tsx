@@ -6,19 +6,25 @@ interface MusicStore {
     currentSong: SongDetails | null;
     sound: AudioPlayer | null;
     isPlaying: boolean;
-    setSong: (song: SongDetails) => void;
+    setSong: (ind: number, song_list: SongDetails[]) => void;
     play: () => void;
     pause: () => void;
     reset: () => void;
+    songList: SongDetails[];
+    currentIndex: number;
 }
 
 export const useMusicStore = create<MusicStore>((set, get) => ({
     currentSong: null,
     sound: null,
     isPlaying: false,
+    songList: [],
+    currentIndex: 0,
 
-    setSong: (song: SongDetails) => {
+    setSong: (ind: number, song_list: SongDetails[]) => {
         const { sound: previousSound } = get();
+
+        const song: SongDetails = song_list[ind];
 
         if (previousSound) {
             previousSound.pause();
@@ -26,7 +32,7 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
         }
 
         const player = createAudioPlayer(song.media_url);
-        
+
         player.setActiveForLockScreen(true, {
             title: song.title,
             artist: song.description,
@@ -40,6 +46,8 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
             currentSong: song,
             sound: player,
             isPlaying: true,
+            songList: song_list,
+            currentIndex: ind
         });
     },
 

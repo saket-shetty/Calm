@@ -1,27 +1,44 @@
-import { router } from "expo-router";
-import { useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { GetAllPlaylists, Playlist } from "@/database/initialize_db";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { FAB } from 'react-native-elements';
 import { List } from "react-native-paper";
 
-export default function Playlist() {
+export default function Playlists() {
 
-    const [playlists, setPlaylists] = useState(["History", "Most Played", "Favourites"])
+    const [playlists, setPlaylists] = useState<Playlist[]>([])
+
+    useFocusEffect(
+        useCallback(() => {
+            GetAllPList();
+        }, [])
+    );
+
+    async function GetAllPList() {
+        let defaultPlist: Playlist[] = [{ id: -1, playlist_name: "History" }, { id: -1, playlist_name: "Most Played" }, { id: -1, playlist_name: "Favourites" }]
+        const plist = await GetAllPlaylists()
+        defaultPlist.push(...plist)
+        setPlaylists(defaultPlist)
+    }
 
     return (
-        <ScrollView>
-            {playlists.map((playlist, i) => (
-                <List.Item
-                    key={i}
-                    title={playlist}
-                    titleNumberOfLines={1}
-                    descriptionNumberOfLines={1}
-                    style={styles.container}
-                    titleStyle={styles.containerText}
-                    onPress={() => { router.push({ pathname: "/playlist_songs", params:{playlistName: playlist} }); }}
-                />
-            ))
-            }
-        </ScrollView >
+        <View style={{ flex: 1 }}>
+            <ScrollView>
+                {playlists.map((playlist, i) => (
+                    <List.Item
+                        key={i}
+                        title={playlist.playlist_name}
+                        titleNumberOfLines={1}
+                        descriptionNumberOfLines={1}
+                        style={styles.container}
+                        titleStyle={styles.containerText}
+                        onPress={() => { router.push({ pathname: "/playlist_songs", params: { playlistName: playlist.playlist_name, playlistId: playlist.id } }); }}
+                    />
+                ))}
+            </ScrollView >
+            <FAB title="+" onPress={() => { router.push("/create_playlist") }} placement="right" />
+        </View>
     );
 }
 

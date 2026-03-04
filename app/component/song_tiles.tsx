@@ -10,9 +10,8 @@ import { List } from "react-native-paper";
 
 export default function SongTiles({ songList, displayBanner = true, autoplay = false }: { songList: SongDetails[], displayBanner: boolean, autoplay: boolean }) {
     const [loadingSong, setLoadingSong] = useState<boolean>(false);
-    const [currentSongIndex, setCurrentSongIndex] = useState<number>(0);
-
     const currentSong = useMusicStore((state) => state.currentSong);
+    const currentIndex = useMusicStore((state) => state.currentIndex);
     const setSong = useMusicStore((state) => state.setSong);
     const sound = useMusicStore((state) => state.sound);
     const loadingRef = useRef(loadingSong);
@@ -25,10 +24,11 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
         if (!sound) return;
 
         const handleSongEnd = (s: AudioStatus) => {
+            console.log(s.didJustFinish)
             if (!s.didJustFinish || !autoplay) return
-            const nextIndex = currentSongIndex + 1;
-            if (songList[nextIndex] && !loadingRef.current) {
-                playSong(songList[nextIndex], nextIndex, true);
+            const nextIndex = currentIndex + 1;
+            if (songList[nextIndex]) {
+                playSong(nextIndex, true);
             }
         };
 
@@ -37,16 +37,14 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
         return () => {
             sound.removeListener('playbackStatusUpdate', handleSongEnd);
         };
-    }, [sound, currentSongIndex]);
+    }, [sound, currentIndex]);
 
-    const playSong = async (song: SongDetails, i: number, autoplay: boolean = false) => {
+    const playSong = async (i: number, autoplay: boolean = false) => {
         if (loadingRef.current) return;
-
-        setCurrentSongIndex(i);
         setLoadingSong(true);
-
         try {
             const storeSong = useMusicStore.getState().currentSong;
+            const song = songList[i]
             // If the song is already playing, just navigate to the player
             if (storeSong && storeSong.id === song.id) {
                 router.push({ pathname: "/music_player" });
@@ -58,9 +56,13 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
             if (mediaUrl === "") {
                 mediaUrl = await SearchSongDetailsByID(song.id);
             }
-            setSong({ ...song, media_url: mediaUrl });
+
+            song.media_url = mediaUrl;
+            songList[i] = song;
+
+            setSong(i, songList);
             if (song) {
-                InsertSong(song.title, song.description, song.id, song.image, mediaUrl)
+                InsertSong(song.title, song.description, song.id, song.image, song.media_url)
             }
             
             if (!autoplay) {
@@ -73,7 +75,6 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
         }
     };
 
-
     return (
         <>
             <View style={styles.content}>
@@ -84,7 +85,7 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
                             title={song.title}
                             description={song.description}
                             left={() => <Image source={{ uri: song.image }} style={{ width: 60, height: 60 }} />}
-                            onPress={() => playSong(song, i)}
+                            onPress={() => playSong(i)}
                             titleNumberOfLines={1}
                             descriptionNumberOfLines={1}
                             style={styles.songDetailContainer}

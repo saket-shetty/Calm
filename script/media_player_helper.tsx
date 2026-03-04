@@ -8,32 +8,32 @@ export interface SongDetails {
     media_url: string
 }
 
-export async function SearchSong(songName: string) : Promise<SongDetails[]> {
+export async function SearchSong(songName: string): Promise<SongDetails[]> {
 
     const res = await fetch(search_song_url + songName)
 
     const res_json = await res.json()
 
-    const res_song_data = res_json["songs"]["data"]
-
     const SongArray: SongDetails[] = []
 
-    for (let i = 0; i < res_song_data.length; i++) {
-        let Details: SongDetails = {
-            title: res_song_data[i]["title"],
-            description: res_song_data[i]["description"],
-            id: res_song_data[i]["id"],
-            image: res_song_data[i]["image"],
-            media_url: ""
+    if (res_json && res_json["songs"] && res_json["songs"]["data"]) {
+        const res_song_data = res_json["songs"]["data"]
+        for (let i = 0; i < res_song_data.length; i++) {
+            let Details: SongDetails = {
+                title: res_song_data[i]["title"],
+                description: res_song_data[i]["description"],
+                id: res_song_data[i]["id"],
+                image: res_song_data[i]["image"],
+                media_url: ""
+            }
+
+            SongArray.push(Details)
         }
-
-        SongArray.push(Details)
     }
-
     return SongArray
 }
 
-export async function SearchSongDetailsByID(id: string) : Promise<string> {
+export async function SearchSongDetailsByID(id: string): Promise<string> {
 
     const res = await fetch(search_song_details_by_id + id)
 
@@ -44,7 +44,7 @@ export async function SearchSongDetailsByID(id: string) : Promise<string> {
     return GetMediaUrl(encrypted_media_url)
 }
 
-async function GetMediaUrl(encrypted_media_url: string) : Promise<string> {
+async function GetMediaUrl(encrypted_media_url: string): Promise<string> {
 
     const EMU_QueryEscape = encodeURIComponent(encrypted_media_url)
 

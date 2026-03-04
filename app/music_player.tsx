@@ -1,16 +1,21 @@
-import { IsSongFavourite, SetFavouriteSong } from "@/database/initialize_db";
+import { InsertSong, IsSongFavourite, SetFavouriteSong } from "@/database/initialize_db";
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import React, { useEffect, useRef, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useMusicStore } from "../store/musicStore";
+import { SongDetails } from "@/script/media_player_helper";
+import { router } from "expo-router";
 
 export default function MusicPlayer() {
     const currentSong = useMusicStore((state) => state.currentSong);
+    const currentIndex = useMusicStore((state) => state.currentIndex);
     const sound = useMusicStore((state) => state.sound);
     const isPlaying = useMusicStore((state) => state.isPlaying);
     const play = useMusicStore((state) => state.play);
     const pause = useMusicStore((state) => state.pause);
+    const setSong = useMusicStore((state) => state.setSong);
+    const songList = useMusicStore((state) => state.songList);
 
     const [position, setPosition] = useState(0);
     const [duration, setDuration] = useState(1);
@@ -30,7 +35,7 @@ export default function MusicPlayer() {
         return () => clearInterval(interval);
     }, [sound]);
 
-    useEffect(()=> {
+    useEffect(() => {
         GetFavouriteDetail()
     })
 
@@ -51,6 +56,25 @@ export default function MusicPlayer() {
         const seconds = totalSeconds % 60;
         return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
     };
+
+    const playNext = (ind: number) => {
+        if (!currentSong) return
+        const song = songList[ind]
+        if (song) {
+            setSong(ind, songList);
+            InsertSong(song.title, song.description, song.id, song.image, song.media_url)
+        }
+    }
+
+    const AddToPL = () => {
+        router.push({
+            pathname: '/add_to_playlist',
+            params: {
+                songId: currentSong.id,
+                songTitle: currentSong.title
+            }
+        });
+    }
 
     return (
         <View style={styles.container}>
@@ -86,6 +110,23 @@ export default function MusicPlayer() {
             </View>
 
             <View style={styles.mediaControlRow}>
+
+                <TouchableOpacity style={styles.favButton} onPress={() => AddToPL()}>
+                    <Ionicons
+                        name="list"
+                        size={25}
+                        color={"white"}
+                    />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.favButton} onPress={() => playNext(currentIndex-1)}>
+                    <Ionicons
+                        name="play-skip-back-sharp"
+                        size={25}
+                        color={"white"}
+                    />
+                </TouchableOpacity>
+
                 <TouchableOpacity style={styles.playButton} onPress={togglePlay}>
                     <Ionicons
                         name={isPlaying ? "pause" : "play"}
@@ -94,10 +135,18 @@ export default function MusicPlayer() {
                     />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.playButton} onPress={()=> SetFavouriteSong(currentSong.id)}>
+                <TouchableOpacity style={styles.favButton} onPress={() => playNext(currentIndex+1)}>
+                    <Ionicons
+                        name="play-skip-forward-sharp"
+                        size={25}
+                        color={"white"}
+                    />
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.favButton} onPress={() => SetFavouriteSong(currentSong.id)}>
                     <Ionicons
                         name={isFavourite ? "heart" : "heart-outline"}
-                        size={30}
+                        size={25}
                         color={"red"}
                         selectionColor={"pink"}
                     />
@@ -123,7 +172,17 @@ const styles = StyleSheet.create({
     time: { color: "#aaa", fontSize: 12 },
     playButton: {
         marginTop: 30,
-        backgroundColor: "#1DB954",
+        backgroundColor: "#E0E1DD",
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        alignItems: "center",
+        justifyContent: "center",
+        color: "pink"
+    },
+
+    favButton: {
+        marginTop: 30,
         width: 70,
         height: 70,
         borderRadius: 35,

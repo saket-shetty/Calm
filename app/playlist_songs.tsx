@@ -1,4 +1,4 @@
-import { GetAllFavouriteSongs, GetMostPlayedSong, GetSongHistory } from "@/database/initialize_db"
+import { GetAllFavouriteSongs, GetMostPlayedSong, GetSongFromPerticularPlaylist, GetSongHistory } from "@/database/initialize_db"
 import { SongDetails } from "@/script/media_player_helper"
 import { useState } from "react"
 import SongTiles from "./component/song_tiles"
@@ -12,7 +12,7 @@ export default function PlaylistSongs() {
 
     const insets = useSafeAreaInsets();
 
-    const { playlistName } = useLocalSearchParams();
+    const { playlistName, playlistId } = useLocalSearchParams();
 
     const [songsList, setSongsList] = useState<SongDetails[]>([])
 
@@ -34,18 +34,26 @@ export default function PlaylistSongs() {
         setSongsList(songs)
     }
 
+    const GetCustomPlaylistSongs = async () => {
+        const songs: SongDetails[] = await GetSongFromPerticularPlaylist(playlistId as unknown as number)
+        setSongsList(songs)
+    }
+
     useFocusEffect(() => {
         navigation.setOptions({ title: playlistName })
 
         const PlaylistName: string = (playlistName as string)
 
         const setup = async () => {
+            console.log(playlistId)
             if (PlaylistName.toLowerCase() === "history") {
                 await GetHistory()
             } else if (PlaylistName.toLowerCase() === "most played") {
                 await GetMPSong()
             } else if (PlaylistName.toLowerCase() === "favourites") {
                 await GetFavSongs()
+            } else {
+                await GetCustomPlaylistSongs()
             }
         };
         setup();

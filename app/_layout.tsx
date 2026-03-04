@@ -28,5 +28,16 @@ export default function RootLayout() {
                 headerTintColor: "white"
             }}
         />
+
+        <Stack.Screen
+            name="create_playlist"
+            options={{
+                title: "Create Playlist",
+                headerStyle: { backgroundColor: "#0D1B2A" },
+                headerTitleStyle: { color: "#E0E1DD" },
+                headerTitleAlign: "center",
+                headerTintColor: "white"
+            }}
+        />
     </Stack>;
 }
