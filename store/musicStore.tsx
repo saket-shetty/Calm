@@ -33,12 +33,10 @@ export const useMusicStore = create<MusicStore>((set, get) => ({
         let player;
 
         if (previousPlayer) {
-            console.log(song.media_url)
             player = previousPlayer
             try {
                 player.replace(song.media_url)
             } catch (error) {
-                console.log(error);
                 player = createAudioPlayer(song.media_url);
             }
         } else {

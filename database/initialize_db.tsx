@@ -251,3 +251,20 @@ export async function GetSongFromPerticularPlaylist(playlistId: number): Promise
         return [];
     }
 }
+
+export async function DeleteSongFromPlaylist(playlistId: number, songIds: string[]) {
+    const database = await ensureDb();
+    try {
+        await database.withTransactionAsync(async () => {
+            for (const sId of songIds) {
+                await database.runAsync(
+                    `DELETE FROM playlistsongs WHERE playlist_id=? AND song_id = (SELECT id FROM song WHERE song_id = ?)`,
+                    [playlistId, sId]
+                );
+            }
+        });
+        console.log("Delete successfully.")
+    } catch (error) {
+        console.error("Deletion failed :", error);
+    }
+}

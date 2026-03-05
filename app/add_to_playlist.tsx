@@ -19,7 +19,6 @@ export default function AddToPlaylist() {
 
     async function GetAllPList() {
         const plist = await GetAllPlaylists()
-        console.log(plist)
         setPlaylists(plist)
     }
 

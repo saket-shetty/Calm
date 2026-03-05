@@ -45,7 +45,6 @@ export default function PlaylistSongs() {
         const PlaylistName: string = (playlistName as string)
 
         const setup = async () => {
-            console.log(playlistId)
             if (PlaylistName.toLowerCase() === "history") {
                 await GetHistory()
             } else if (PlaylistName.toLowerCase() === "most played") {
@@ -61,7 +60,7 @@ export default function PlaylistSongs() {
 
     return (
         <View style={{ flex: 1, paddingBottom: insets.bottom }}>
-            <SongTiles songList={songsList} displayBanner={true} autoplay={playlistName !== "History"} />
+            <SongTiles songList={songsList} displayBanner={true} autoplay={playlistName !== "History"} playlistId={playlistId as unknown as number} playlistName={playlistName as string} />
         </View>
     )
 }

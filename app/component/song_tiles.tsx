@@ -1,4 +1,4 @@
-import { InsertSong } from "@/database/initialize_db";
+import { InsertSong, DeleteSongFromPlaylist } from "@/database/initialize_db";
 import { SearchSongDetailsByID, SongDetails } from "@/script/media_player_helper";
 import { useMusicStore } from "@/store/musicStore";
 import { AudioStatus } from "expo-audio";
@@ -6,15 +6,40 @@ import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { List } from "react-native-paper";
+import { MaterialIcons } from '@expo/vector-icons';
+import { useNavigation } from "@react-navigation/native";
 
 
-export default function SongTiles({ songList, displayBanner = true, autoplay = false }: { songList: SongDetails[], displayBanner: boolean, autoplay: boolean }) {
+export default function SongTiles({ songList, displayBanner = true, autoplay = false, playlistId = -1, playlistName}: { songList: SongDetails[], displayBanner: boolean, autoplay: boolean, playlistId: number, playlistName: string}) {
     const [loadingSong, setLoadingSong] = useState<boolean>(false);
     const currentSong = useMusicStore((state) => state.currentSong);
     const currentIndex = useMusicStore((state) => state.currentIndex);
     const setSong = useMusicStore((state) => state.setSong);
     const sound = useMusicStore((state) => state.sound);
     const loadingRef = useRef(loadingSong);
+    const navigation = useNavigation();
+    const [selectedSongToDelete, setSelectedSongToDelete] = useState<string[]>([]);
+    const [showDeleteRadioButton, setShowDeleteRadioButton] = useState<boolean>(false);
+
+    const toggleSelect = (id: string) => {
+        setSelectedSongToDelete(prev =>
+            prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+        );
+    };
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                selectedSongToDelete.length !== 0 && <Text style={styles.deleteText} onPress={() => DeleteSelectedSongs()}>Delete</Text>
+            ),
+        })
+    }, [selectedSongToDelete])
+
+    const DeleteSelectedSongs = async () => {
+        await DeleteSongFromPlaylist(playlistId, selectedSongToDelete);
+        router.back()
+        router.push({ pathname: "/playlist_songs", params: { playlistName: playlistName, playlistId: playlistId } });
+    }
 
     useEffect(() => {
         loadingRef.current = loadingSong;
@@ -86,9 +111,22 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
                             description={song.description}
                             left={() => <Image source={{ uri: song.image }} style={{ width: 60, height: 60 }} />}
                             onPress={() => playSong(i)}
+                            onLongPress={() => setShowDeleteRadioButton(playlistId != -1)}
                             titleNumberOfLines={1}
                             descriptionNumberOfLines={1}
                             style={styles.songDetailContainer}
+                            right={() => {
+                                const isSelected = selectedSongToDelete.includes(song.id);
+                                return (
+                                    showDeleteRadioButton && <MaterialIcons
+                                        name={isSelected ? "check-circle" : "radio-button-unchecked"}
+                                        size={24}
+                                        color={isSelected ? "#1DB954" : "#444"}
+                                        onPress={() => toggleSelect(song.id)}
+                                        style={styles.radioButtonAlign}
+                                    />
+                                );
+                            }}
                         />
                     ))}
                 </ScrollView>
@@ -174,7 +212,33 @@ const styles = StyleSheet.create({
         backgroundColor: "#1DB954",
         padding: 10,
     },
-    bannerImage: { width: 50, height: 50, borderRadius: 5 },
-    bannerTitle: { color: "#fff", fontWeight: "bold" },
-    bannerArtist: { color: "#eee", fontSize: 12 },
+
+    bannerImage: {
+        width: 50,
+        height: 50,
+        borderRadius: 5,
+    },
+
+    bannerTitle: {
+        color: "#fff",
+        fontWeight: "bold",
+    },
+
+    bannerArtist: {
+        color: "#eee",
+        fontSize: 12,
+    },
+
+    radioButtonAlign: {
+        flexDirection: 'row',
+        alignSelf: 'center',
+        fontSize: 35,
+        padding: 10,
+    },
+
+    deleteText: {
+        color: 'red',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
 });

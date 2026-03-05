@@ -24,7 +24,7 @@ export default function Homepage() {
                 />
             </View>
 
-            <SongTiles songList={songDetails} displayBanner={true} autoplay={false}/>
+            <SongTiles songList={songDetails} displayBanner={true} autoplay={false} playlistId={-1} playlistName=""/>
         </View>
     );
 }
