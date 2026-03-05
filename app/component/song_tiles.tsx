@@ -24,7 +24,7 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
         if (!sound) return;
 
         const handleSongEnd = (s: AudioStatus) => {
-            console.log(s.didJustFinish)
+            console.log(s.duration - s.currentTime)
             if (!s.didJustFinish || !autoplay) return
             const nextIndex = currentIndex + 1;
             if (songList[nextIndex]) {

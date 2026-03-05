@@ -4,7 +4,6 @@ import Slider from "@react-native-community/slider";
 import React, { useEffect, useRef, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useMusicStore } from "../store/musicStore";
-import { SongDetails } from "@/script/media_player_helper";
 import { router } from "expo-router";
 
 export default function MusicPlayer() {
@@ -60,7 +59,7 @@ export default function MusicPlayer() {
     const playNext = (ind: number) => {
         if (!currentSong) return
         const song = songList[ind]
-        if (song) {
+        if (song && song.media_url !== "") {
             setSong(ind, songList);
             InsertSong(song.title, song.description, song.id, song.image, song.media_url)
         }
