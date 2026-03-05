@@ -36,7 +36,8 @@ export default function RootLayout() {
                 headerStyle: { backgroundColor: "#0D1B2A" },
                 headerTitleStyle: { color: "#E0E1DD" },
                 headerTitleAlign: "center",
-                headerTintColor: "white"
+                headerTintColor: "white",
+                headerShown: false,
             }}
         />
     </Stack>;
