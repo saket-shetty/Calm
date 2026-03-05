@@ -39,5 +39,15 @@ yarn-error.*
 app-example
 
 # generated native folders
+# android\app\build\outputs\apk\release
 /ios
-/android
+android/**/*
+
+!android/app/
+!android/app/build/
+!android/app/build/outputs/
+!android/app/build/outputs/apk/
+!android/app/build/outputs/apk/release/
+!android/app/build/outputs/apk/release/*
+
+!android/app/build/outputs/apk/release/baselineProfiles
