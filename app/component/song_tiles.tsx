@@ -5,7 +5,6 @@ import { AudioStatus } from "expo-audio";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { List } from "react-native-paper";
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
 
@@ -79,10 +78,9 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
             let mediaUrl: string = song.media_url
             if (mediaUrl === "") {
                 mediaUrl = await SearchSongDetailsByID(song.id);
+                song.media_url = mediaUrl;
+                songList[i] = song;
             }
-
-            song.media_url = mediaUrl;
-            songList[i] = song;
 
             setSong(i, songList);
             if (song) {
@@ -98,6 +96,25 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
         }
     };
 
+    const renderSongItem = ({ item, index }: { item: SongDetails, index: number }) => (
+        <TouchableOpacity style={renderstyle.songCard}
+            onPress={() => playSong(index)}
+            onLongPress={() => setShowDeleteRadioButton(playlistId != -1)}>
+            <Image source={{ uri: item.image.replaceAll("50x50.jpg", "500x500.jpg") }} style={renderstyle.thumbnail} />
+            <View style={renderstyle.textContainer}>
+                <Text style={renderstyle.title} numberOfLines={1}>{item.title}</Text>
+                <Text style={renderstyle.description} numberOfLines={1}>{item.description}</Text>
+            </View>
+            {showDeleteRadioButton && <MaterialIcons
+                name={selectedSongToDelete.includes(item.id) ? "check-circle" : "radio-button-unchecked"}
+                size={24}
+                color={selectedSongToDelete.includes(item.id) ? "#1DB954" : "#444"}
+                onPress={() => toggleSelect(item.id)}
+                style={styles.radioButtonAlign}
+            />}
+        </TouchableOpacity>
+    );
+
     return (
         <>
             <View style={styles.content}>
@@ -105,37 +122,13 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
                     data={songList}
                     keyExtractor={(_, i) => i.toString()}
                     onEndReached={() => {
-                        if (songList.length >= 15){
+                        if (songList.length >= 15) {
                             setScrolledToBottom(true)
                         }
                     }}
-                    ListFooterComponent={() => {
-                        return scrolledToBottom ? <ActivityIndicator size="large" color="#0000ff" /> : null
-                    }}
-                    renderItem={({ item, index }) => (
-                        <List.Item
-                            title={item.title}
-                            description={item.description}
-                            left={() => <Image source={{ uri: item.image }} style={{ width: 60, height: 60 }} />}
-                            onPress={() => playSong(index)}
-                            onLongPress={() => setShowDeleteRadioButton(playlistId != -1)}
-                            titleNumberOfLines={1}
-                            descriptionNumberOfLines={1}
-                            style={styles.songDetailContainer}
-                            right={() => {
-                                const isSelected = selectedSongToDelete.includes(item.id);
-                                return (
-                                    showDeleteRadioButton && <MaterialIcons
-                                        name={isSelected ? "check-circle" : "radio-button-unchecked"}
-                                        size={24}
-                                        color={isSelected ? "#1DB954" : "#444"}
-                                        onPress={() => toggleSelect(item.id)}
-                                        style={styles.radioButtonAlign}
-                                    />
-                                );
-                            }}
-                        />
-                    )}
+                    contentContainerStyle={songList.length === 0 ? { flex: 1 } : renderstyle.listContent}
+                    renderItem={renderSongItem}
+                    ListEmptyComponent={() => playlistName === "Trending" && <ActivityIndicator style={{ flex: 1 }} size="large" color="white" />}
                 />
             </View>
 
@@ -167,52 +160,12 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-
-    searchContainer: {
-        padding: 10,
-        backgroundColor: "#f2f2f2",
-    },
-
-    searchInput: {
-        backgroundColor: "#fff",
-        padding: 10,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: "#ddd",
-    },
 
     content: {
         flex: 1,
-        justifyContent: "center",
-        alignItems: "flex-start",
-        paddingLeft: 10
+        backgroundColor: '#1B263B'
     },
 
-    banner: {
-        height: 60,
-        backgroundColor: "#222",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-
-    bannerText: {
-        color: "#fff",
-        fontWeight: "bold",
-    },
-
-    songDetailContainer: {
-        minWidth: '98%',
-        maxWidth: '98%',
-        borderWidth: 1,
-        borderRadius: 10,
-        margin: 2,
-        padding: 10
-    },
-
-    // Now Playing Banner
     nowPlayingBanner: {
         flexDirection: "row",
         alignItems: "center",
@@ -237,9 +190,7 @@ const styles = StyleSheet.create({
     },
 
     radioButtonAlign: {
-        flexDirection: 'row',
-        alignSelf: 'center',
-        fontSize: 35,
+        fontSize: 25,
         padding: 10,
     },
 
@@ -248,4 +199,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+});
+
+const renderstyle = StyleSheet.create({
+    listContent: { padding: 15 },
+    songCard: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
+    thumbnail: { width: 60, height: 60, borderRadius: 5, backgroundColor: '#333' },
+    textContainer: { marginLeft: 15, flex: 1 },
+    title: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+    description: { color: '#b3b3b3', fontSize: 13, marginTop: 4 },
+    empty: { color: '#fff', textAlign: 'center', marginTop: 50 },
 });

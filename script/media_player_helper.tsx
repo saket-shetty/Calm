@@ -1,6 +1,7 @@
 import { GetSongDetailsFromIDs } from "@/database/initialize_db";
-import { search_song_url, search_song_details_by_id, search_media_url } from "../endpoints/url";
-import { Paths, File } from "expo-file-system"
+import CookieManager from '@react-native-cookies/cookies';
+import { File, Paths } from "expo-file-system";
+import { get_english_trending_songs, search_media_url, search_song_details_by_id, search_song_url } from "../endpoints/url";
 
 export interface SongDetails {
     title: string,
@@ -98,5 +99,48 @@ export async function GetAllDownloadedSongs(): Promise<SongDetails[]> {
         console.error("Could not list cache:", error);
     } finally {
         return AllDownloadedSongs
+    }
+}
+
+export async function GetTrendingSongs(language: string): Promise<SongDetails[]> {
+
+    let AllTrendingSongs: SongDetails[] = []
+
+    try {
+        const domain = "www.jiosaavn.com";
+        await CookieManager.set(`https://${domain}`, {
+            name: 'DL',
+            value: 'english',
+            domain: domain,
+            path: '/',
+        });
+        await CookieManager.set(`https://${domain}`, {
+            name: 'L',
+            value: language.toLowerCase(),
+            domain: domain,
+            path: '/',
+        });
+
+        const res = await fetch(get_english_trending_songs)
+
+        const res_json = await res.json()
+
+        if (res_json && res_json["list"]) {
+            const res_song_data = res_json["list"]
+            for (let i = 0; i < res_song_data.length; i++) {
+                let Details: SongDetails = {
+                    title: res_song_data[i]["title"],
+                    description: res_song_data[i]["subtitle"],
+                    id: res_song_data[i]["id"],
+                    image: res_song_data[i]["image"].replaceAll("150x150.jpg", "500x500.jpg"),
+                    media_url: await SearchSongDetailsByID(res_song_data[i]["id"])
+                }
+                AllTrendingSongs.push(Details)
+            }
+        }
+    } catch (error) {
+        console.error(error)
+    } finally {
+        return AllTrendingSongs
     }
 }

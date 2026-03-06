@@ -8,6 +8,7 @@ import { useMusicStore } from "@/store/musicStore";
 import * as Notifications from 'expo-notifications';
 import { useKeepAwake } from 'expo-keep-awake';
 import Playlist from "./playlist";
+import TrendingPage from "./trending_page";
 
 const Tab = createBottomTabNavigator();
 
@@ -37,8 +38,10 @@ export default function Index() {
     }, []);
 
     return (
-        <Tab.Navigator>
-            <Tab.Screen name="Calm" component={Homepage} 
+        <Tab.Navigator screenOptions={{
+            tabBarStyle: { backgroundColor: 'black', borderTopWidth: 0, elevation: 0 },
+        }}>
+            <Tab.Screen name="Calm" component={Homepage}
                 options={{
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="musical-note" size={size} color={color} />
@@ -46,6 +49,15 @@ export default function Index() {
                     headerStyle: { backgroundColor: "#0D1B2A" },
                     headerTitleStyle: { color: "#E0E1DD" },
                     headerTitleAlign: "center"
+                }}
+            />
+
+            <Tab.Screen name="Trending" component={TrendingPage}
+                options={{
+                    tabBarIcon: ({ color, size }) => (
+                        <Ionicons name="trending-up" size={size} color={color} />
+                    ),
+                    headerShown: false
                 }}
             />
 
