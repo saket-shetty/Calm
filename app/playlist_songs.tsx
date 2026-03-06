@@ -15,13 +15,14 @@ export default function PlaylistSongs() {
     const { playlistName, playlistId } = useLocalSearchParams();
 
     const [songsList, setSongsList] = useState<SongDetails[]>([])
+    const [scrolledToBottom, setScrolledToBottom] = useState(false)
 
     const navigation = useNavigation();
-
+    const [offset, setOffset] = useState(0)
 
     const GetHistory = async () => {
-        const songs: SongDetails[] = await GetSongHistory()
-        setSongsList(songs)
+        const songs: SongDetails[] = await GetSongHistory(offset)
+        setSongsList([...songsList, ...songs])
     }
 
     const GetMPSong = async () => {
@@ -44,26 +45,34 @@ export default function PlaylistSongs() {
         setSongsList(songs)
     }
 
-    useFocusEffect(() => {
-        navigation.setOptions({ title: playlistName })
-
+    const setup = async () => {
         const PlaylistName: string = (playlistName as string)
+        if (PlaylistName.toLowerCase() === "history") {
+            await GetHistory()
+        } else if (PlaylistName.toLowerCase() === "most played") {
+            await GetMPSong()
+        } else if (PlaylistName.toLowerCase() === "favourites") {
+            await GetFavSongs()
+        } else if (PlaylistName.toLowerCase() === "downloaded songs") {
+            await GetDwnldSongs()
+        } else {
+            await GetCustomPlaylistSongs()
+        }
+        setScrolledToBottom(false)
+    };
 
-        const setup = async () => {
-            if (PlaylistName.toLowerCase() === "history") {
-                await GetHistory()
-            } else if (PlaylistName.toLowerCase() === "most played") {
-                await GetMPSong()
-            } else if (PlaylistName.toLowerCase() === "favourites") {
-                await GetFavSongs()
-            } else if (PlaylistName.toLowerCase() === "downloaded songs") {
-                await GetDwnldSongs()
-            } else {
-                await GetCustomPlaylistSongs()
-            }
-        };
+    useEffect(() => {
+        navigation.setOptions({ title: playlistName })
+        setOffset(offset + 1)
         setup();
-    });
+    }, []);
+
+    useEffect(() => {
+        if (scrolledToBottom) {
+            setOffset(offset + 1)
+            setup()
+        }
+    }, [scrolledToBottom])
 
     return (
         <View style={{ flex: 1, paddingBottom: insets.bottom }}>
@@ -72,8 +81,10 @@ export default function PlaylistSongs() {
                 displayBanner={true}
                 autoplay={playlistName !== "History"}
                 playlistId={playlistId as unknown as number}
-                playlistName={playlistName as string} 
-                />
+                playlistName={playlistName as string}
+                scrolledToBottom={scrolledToBottom}
+                setScrolledToBottom={setScrolledToBottom}
+            />
         </View>
     )
 }

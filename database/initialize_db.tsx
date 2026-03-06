@@ -92,15 +92,16 @@ async function InsertSongInHistory(song_id: string) {
     );
 }
 
-export async function GetSongHistory(): Promise<SongDetails[]> {
+export async function GetSongHistory(offset: number): Promise<SongDetails[]> {
     const database = await ensureDb();
     const result = await database.getAllAsync<any>(`
         SELECT S.* FROM history AS H
         INNER JOIN song AS S
         ON H.song_played_id = S.id
         ORDER BY H.id DESC
-        LIMIT 20
-    `);
+        LIMIT 15
+        OFFSET 15*?
+    `, offset);
 
     return result.map(row => ({
         title: row.title,

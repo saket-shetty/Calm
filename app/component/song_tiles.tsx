@@ -4,13 +4,13 @@ import { useMusicStore } from "@/store/musicStore";
 import { AudioStatus } from "expo-audio";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { List } from "react-native-paper";
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
 
 
-export default function SongTiles({ songList, displayBanner = true, autoplay = false, playlistId = -1, playlistName}: { songList: SongDetails[], displayBanner: boolean, autoplay: boolean, playlistId: number, playlistName: string}) {
+export default function SongTiles({ songList, displayBanner = true, autoplay = false, playlistId = -1, playlistName, setScrolledToBottom, scrolledToBottom }: { songList: SongDetails[], displayBanner: boolean, autoplay: boolean, playlistId: number, playlistName: string, setScrolledToBottom: React.Dispatch<React.SetStateAction<boolean>>, scrolledToBottom: boolean }) {
     const [loadingSong, setLoadingSong] = useState<boolean>(false);
     const currentSong = useMusicStore((state) => state.currentSong);
     const currentIndex = useMusicStore((state) => state.currentIndex);
@@ -49,7 +49,6 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
         if (!sound) return;
 
         const handleSongEnd = (s: AudioStatus) => {
-            console.log(s.duration - s.currentTime)
             if (!s.didJustFinish || !autoplay) return
             const nextIndex = currentIndex + 1;
             if (songList[nextIndex]) {
@@ -89,7 +88,6 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
             if (song) {
                 InsertSong(song.title, song.description, song.id, song.image, song.media_url)
             }
-            
             if (!autoplay) {
                 router.push({ pathname: "/music_player" });
             }
@@ -103,33 +101,42 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
     return (
         <>
             <View style={styles.content}>
-                <ScrollView keyboardShouldPersistTaps="always">
-                    {songList.map((song, i) => (
+                <FlatList
+                    data={songList}
+                    keyExtractor={(_, i) => i.toString()}
+                    onEndReached={() => {
+                        if (songList.length >= 15){
+                            setScrolledToBottom(true)
+                        }
+                    }}
+                    ListFooterComponent={() => {
+                        return scrolledToBottom ? <ActivityIndicator size="large" color="#0000ff" /> : null
+                    }}
+                    renderItem={({ item, index }) => (
                         <List.Item
-                            key={i}
-                            title={song.title}
-                            description={song.description}
-                            left={() => <Image source={{ uri: song.image }} style={{ width: 60, height: 60 }} />}
-                            onPress={() => playSong(i)}
+                            title={item.title}
+                            description={item.description}
+                            left={() => <Image source={{ uri: item.image }} style={{ width: 60, height: 60 }} />}
+                            onPress={() => playSong(index)}
                             onLongPress={() => setShowDeleteRadioButton(playlistId != -1)}
                             titleNumberOfLines={1}
                             descriptionNumberOfLines={1}
                             style={styles.songDetailContainer}
                             right={() => {
-                                const isSelected = selectedSongToDelete.includes(song.id);
+                                const isSelected = selectedSongToDelete.includes(item.id);
                                 return (
                                     showDeleteRadioButton && <MaterialIcons
                                         name={isSelected ? "check-circle" : "radio-button-unchecked"}
                                         size={24}
                                         color={isSelected ? "#1DB954" : "#444"}
-                                        onPress={() => toggleSelect(song.id)}
+                                        onPress={() => toggleSelect(item.id)}
                                         style={styles.radioButtonAlign}
                                     />
                                 );
                             }}
                         />
-                    ))}
-                </ScrollView>
+                    )}
+                />
             </View>
 
             {currentSong && displayBanner && (

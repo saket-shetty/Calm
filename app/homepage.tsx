@@ -6,6 +6,7 @@ import SongTiles from "./component/song_tiles";
 export default function Homepage() {
     const [search, setSearch] = useState("");
     const [songDetails, setSongDetails] = useState<SongDetails[]>([]);
+    const [scrolledToBottom, setScrolledToBottom] = useState(false)
 
     const OnSongSearch = async (songName: string) => {
         setSearch(songName);
@@ -24,7 +25,15 @@ export default function Homepage() {
                 />
             </View>
 
-            <SongTiles songList={songDetails} displayBanner={true} autoplay={false} playlistId={-1} playlistName=""/>
+            <SongTiles
+                songList={songDetails}
+                displayBanner={true}
+                autoplay={false}
+                playlistId={-1}
+                playlistName="" 
+                scrolledToBottom={scrolledToBottom}
+                setScrolledToBottom={setScrolledToBottom}
+                />
         </View>
     );
 }
