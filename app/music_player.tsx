@@ -2,9 +2,10 @@ import { InsertSong, IsSongFavourite, SetFavouriteSong } from "@/database/initia
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import React, { useEffect, useRef, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useMusicStore } from "../store/musicStore";
-import { router } from "expo-router";
+import { router, useNavigation } from "expo-router";
+import { DownloadSongLocal } from "@/script/media_player_helper";
 
 export default function MusicPlayer() {
     const currentSong = useMusicStore((state) => state.currentSong);
@@ -20,8 +21,26 @@ export default function MusicPlayer() {
     const [duration, setDuration] = useState(1);
     const [isFavourite, setIsFavourite] = useState(false);
     const wasPlayingRef = useRef(false);
+    const navigation = useNavigation();
+    const [isDownloading, setIsDownloading] = useState(false);
+
 
     if (!currentSong) return null;
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                isDownloading ?  
+                <ActivityIndicator size="small" color="#0000ff" style={{ marginRight: 10 }} />
+                :<Ionicons
+                    name={"download-outline"}
+                    size={30}
+                    color={"#E0E1DD"}
+                    onPress={() => DownloadSong()}
+                />
+            ),
+        })
+    }, [isDownloading])
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -75,6 +94,12 @@ export default function MusicPlayer() {
         });
     }
 
+    const DownloadSong = async () => {
+        setIsDownloading(true)
+        await DownloadSongLocal(currentSong.id, currentSong.media_url)
+        setIsDownloading(false)
+    }
+
     return (
         <View style={styles.container}>
             <Image
@@ -118,7 +143,7 @@ export default function MusicPlayer() {
                     />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.favButton} onPress={() => playNext(currentIndex-1)}>
+                <TouchableOpacity style={styles.favButton} onPress={() => playNext(currentIndex - 1)}>
                     <Ionicons
                         name="play-skip-back-sharp"
                         size={25}
@@ -134,7 +159,7 @@ export default function MusicPlayer() {
                     />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.favButton} onPress={() => playNext(currentIndex+1)}>
+                <TouchableOpacity style={styles.favButton} onPress={() => playNext(currentIndex + 1)}>
                     <Ionicons
                         name="play-skip-forward-sharp"
                         size={25}

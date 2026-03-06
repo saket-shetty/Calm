@@ -1,6 +1,6 @@
 import { GetAllFavouriteSongs, GetMostPlayedSong, GetSongFromPerticularPlaylist, GetSongHistory } from "@/database/initialize_db"
-import { SongDetails } from "@/script/media_player_helper"
-import { useState } from "react"
+import { GetAllDownloadedSongs, SongDetails } from "@/script/media_player_helper"
+import { useEffect, useState } from "react"
 import SongTiles from "./component/song_tiles"
 import { useFocusEffect, useLocalSearchParams } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -39,6 +39,11 @@ export default function PlaylistSongs() {
         setSongsList(songs)
     }
 
+    const GetDwnldSongs = async () => {
+        const songs: SongDetails[] = await GetAllDownloadedSongs()
+        setSongsList(songs)
+    }
+
     useFocusEffect(() => {
         navigation.setOptions({ title: playlistName })
 
@@ -51,6 +56,8 @@ export default function PlaylistSongs() {
                 await GetMPSong()
             } else if (PlaylistName.toLowerCase() === "favourites") {
                 await GetFavSongs()
+            } else if (PlaylistName.toLowerCase() === "downloaded songs") {
+                await GetDwnldSongs()
             } else {
                 await GetCustomPlaylistSongs()
             }
@@ -60,7 +67,13 @@ export default function PlaylistSongs() {
 
     return (
         <View style={{ flex: 1, paddingBottom: insets.bottom }}>
-            <SongTiles songList={songsList} displayBanner={true} autoplay={playlistName !== "History"} playlistId={playlistId as unknown as number} playlistName={playlistName as string} />
+            <SongTiles
+                songList={songsList}
+                displayBanner={true}
+                autoplay={playlistName !== "History"}
+                playlistId={playlistId as unknown as number}
+                playlistName={playlistName as string} 
+                />
         </View>
     )
 }

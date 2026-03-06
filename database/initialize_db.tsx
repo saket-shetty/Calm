@@ -99,6 +99,7 @@ export async function GetSongHistory(): Promise<SongDetails[]> {
         INNER JOIN song AS S
         ON H.song_played_id = S.id
         ORDER BY H.id DESC
+        LIMIT 20
     `);
 
     return result.map(row => ({
@@ -266,5 +267,35 @@ export async function DeleteSongFromPlaylist(playlistId: number, songIds: string
         console.log("Delete successfully.")
     } catch (error) {
         console.error("Deletion failed :", error);
+    }
+}
+
+export async function GetSongDetailsFromIDs(songId: string): Promise<SongDetails> {
+    const database = await ensureDb();
+
+    try {
+        const result = await database.getFirstAsync<any>(`
+            SELECT *
+            FROM song 
+            WHERE song_id = ?
+        `, songId);
+
+        return {
+            title: result.title,
+            description: result.description,
+            id: result.song_id,
+            image: result.image_url,
+            media_url: result.media_url
+        };
+
+    } catch (error) {
+        console.error("Get songs from playlist failed:", error);
+        return {
+            title: "",
+            description: "",
+            id: "",
+            image: "",
+            media_url: ""
+        };
     }
 }

@@ -1,4 +1,6 @@
+import { GetSongDetailsFromIDs } from "@/database/initialize_db";
 import { search_song_url, search_song_details_by_id, search_media_url } from "../endpoints/url";
+import { Paths, File } from "expo-file-system"
 
 export interface SongDetails {
     title: string,
@@ -56,8 +58,45 @@ async function GetMediaUrl(encrypted_media_url: string): Promise<string> {
 
     let auth_url: string = res_json["auth_url"]
 
-    auth_url = auth_url.replaceAll("web", "aac")
+    auth_url = auth_url.replaceAll("web", "aac").split("?")[0]
 
     return auth_url
 
+}
+
+export async function DownloadSongLocal(songId: string, mediaUrl: string) {
+
+    const songFile = new File(Paths.cache, `${songId}.m4a`);
+
+    console.log("Downloading", songFile);
+
+    if (!songFile.exists) {
+        await File.downloadFileAsync(mediaUrl, songFile)
+    } else {
+        console.log("Already downloaded.")
+    }
+
+    console.log("Download completed", songFile);
+}
+
+export async function GetAllDownloadedSongs(): Promise<SongDetails[]> {
+
+    let AllDownloadedSongs: SongDetails[] = []
+
+    try {
+        const files = Paths.cache.list()
+
+        for (const x of files) {
+            if (x.uri.endsWith(".m4a")) {
+                const songIdFromFilename = x.name.split(".")[0]
+                let s: SongDetails = await GetSongDetailsFromIDs(songIdFromFilename)
+                s.media_url = x.uri
+                AllDownloadedSongs.push(s)
+            }
+        }
+    } catch (error) {
+        console.error("Could not list cache:", error);
+    } finally {
+        return AllDownloadedSongs
+    }
 }

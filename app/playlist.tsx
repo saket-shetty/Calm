@@ -16,7 +16,7 @@ export default function Playlists() {
     );
 
     async function GetAllPList() {
-        let defaultPlist: Playlist[] = [{ id: -1, playlist_name: "History" }, { id: -1, playlist_name: "Most Played" }, { id: -1, playlist_name: "Favourites" }]
+        let defaultPlist: Playlist[] = [{ id: -1, playlist_name: "History" }, { id: -1, playlist_name: "Most Played" }, { id: -1, playlist_name: "Favourites" }, { id: -1, playlist_name: "Downloaded Songs" }]
         const plist = await GetAllPlaylists()
         defaultPlist.push(...plist)
         setPlaylists(defaultPlist)
