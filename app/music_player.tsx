@@ -31,7 +31,7 @@ export default function MusicPlayer() {
         navigation.setOptions({
             headerRight: () => (
                 isDownloading ?  
-                <ActivityIndicator size="small" color="#0000ff" style={{ marginRight: 10 }} />
+                <ActivityIndicator size="small" color="white" style={{ marginRight: 10 }} />
                 :<Ionicons
                     name={"download-outline"}
                     size={30}
@@ -40,7 +40,7 @@ export default function MusicPlayer() {
                 />
             ),
         })
-    }, [isDownloading])
+    }, [currentIndex, isDownloading])
 
     useEffect(() => {
         const interval = setInterval(() => {
