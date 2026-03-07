@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter, useLocalSearchParams, Stack, useFocusEffect } from 'expo-router'; // Added Stack
+import { useRouter, useLocalSearchParams, Stack, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { GetAllPlaylists, InsertSongInMultiplePlaylists, Playlist } from '@/database/initialize_db';

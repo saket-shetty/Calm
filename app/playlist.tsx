@@ -1,9 +1,7 @@
 import { GetAllPlaylists, Playlist } from "@/database/initialize_db";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
-import { FAB } from 'react-native-elements';
-import { List } from "react-native-paper";
+import { FlatList, StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import Header from "./component/header";
 
 export default function Playlists() {
@@ -23,38 +21,105 @@ export default function Playlists() {
         setPlaylists(defaultPlist)
     }
 
+    const renderPlaylistItem = ({ item }: { item: Playlist }) => (
+        <TouchableOpacity
+            style={styles.playlistCard}
+            onPress={() => { router.push({ pathname: "/playlist_songs", params: { playlistName: item.playlist_name, playlistId: item.id } }); }}
+        >
+            <View style={styles.iconPlaceholder}>
+                <Text style={styles.playlistIcon}>♪</Text>
+            </View>
+            <View style={styles.infoContainer}>
+                <Text style={styles.playlistName}>{item.playlist_name}</Text>
+                <Text style={styles.subtitle}>Playlist • {item.id}</Text>
+            </View>
+        </TouchableOpacity>
+    );
+
     return (
-        <View style={{ flex: 1 }}>
-            <Header title="Playlist" />
-            <ScrollView>
-                {playlists.map((playlist, i) => (
-                    <List.Item
-                        key={i}
-                        title={playlist.playlist_name}
-                        titleNumberOfLines={1}
-                        descriptionNumberOfLines={1}
-                        style={styles.container}
-                        titleStyle={styles.containerText}
-                        onPress={() => { router.push({ pathname: "/playlist_songs", params: { playlistName: playlist.playlist_name, playlistId: playlist.id } }); }}
-                    />
-                ))}
-            </ScrollView >
-            <FAB title="+" onPress={() => { router.push("/create_playlist") }} placement="right" />
+        <View style={styles.container}>
+            <Header title="My Playlists" />
+            <FlatList
+                data={playlists}
+                keyExtractor={(_, i) => i.toString()}
+                renderItem={renderPlaylistItem}
+                contentContainerStyle={styles.listContent}
+            />
+            <TouchableOpacity
+                style={styles.fab}
+                activeOpacity={0.8}
+                onPress={() => { router.push("/create_playlist") }}
+            >
+                <Text style={styles.fabText}>+</Text>
+            </TouchableOpacity>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#1B263B",
-        borderRadius: 10,
-        borderWidth: 1,
-        padding: 15,
-        margin: 5,
+        flex: 1,
+        backgroundColor: '#0D1B2A'
+    },
+    listContent: {
+        paddingHorizontal: 15,
+        paddingBottom: 20
+    },
+    playlistCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#1a1a1a',
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 5,
+    },
+    iconPlaceholder: {
+        width: 50,
+        height: 50,
+        backgroundColor: '#1DB954',
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    playlistIcon: {
+        color: '#fff',
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    infoContainer: {
+        marginLeft: 15,
+    },
+    playlistName: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    subtitle: {
+        color: '#888',
+        fontSize: 13,
+        marginTop: 2,
     },
 
-    containerText: {
-        color: "#E0E1DD",
-        fontWeight: "700"
-    }
-})
+    fab: {
+        position: 'absolute',
+        bottom: 30,
+        right: 20,
+        backgroundColor: '#1DB954',
+        width: 50,
+        height: 50,
+        borderRadius: 30,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+    },
+    fabText: {
+        color: '#fff',
+        fontSize: 32,
+        fontWeight: '300',
+        marginTop: -3, // Visual centering for the plus sign
+    },
+});

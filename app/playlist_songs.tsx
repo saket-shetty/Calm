@@ -2,7 +2,7 @@ import { GetAllFavouriteSongs, GetMostPlayedSong, GetSongFromPerticularPlaylist,
 import { GetAllDownloadedSongs, SongDetails } from "@/script/media_player_helper"
 import { useEffect, useState } from "react"
 import SongTiles from "./component/song_tiles"
-import { useFocusEffect, useLocalSearchParams } from "expo-router"
+import { useLocalSearchParams } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { View } from "react-native"
 import { useNavigation } from "@react-navigation/native";

@@ -1,4 +1,4 @@
-import { AudioModule, AudioPlayer, createAudioPlayer } from "expo-audio";
+import { AudioPlayer, createAudioPlayer } from "expo-audio";
 import { create } from "zustand";
 import { SongDetails } from "../script/media_player_helper";
 
