@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { FAB } from 'react-native-elements';
 import { List } from "react-native-paper";
+import Header from "./component/header";
 
 export default function Playlists() {
 
@@ -24,6 +25,7 @@ export default function Playlists() {
 
     return (
         <View style={{ flex: 1 }}>
+            <Header title="Playlist" />
             <ScrollView>
                 {playlists.map((playlist, i) => (
                     <List.Item

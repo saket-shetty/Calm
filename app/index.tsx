@@ -46,9 +46,7 @@ export default function Index() {
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="musical-note" size={size} color={color} />
                     ),
-                    headerStyle: { backgroundColor: "#0D1B2A" },
-                    headerTitleStyle: { color: "#E0E1DD" },
-                    headerTitleAlign: "center"
+                    headerShown: false
                 }}
             />
 
@@ -57,7 +55,7 @@ export default function Index() {
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="trending-up" size={size} color={color} />
                     ),
-                    headerShown: false
+                    headerShown: false,
                 }}
             />
 
@@ -66,9 +64,7 @@ export default function Index() {
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="book" size={size} color={color} />
                     ),
-                    headerStyle: { backgroundColor: "#0D1B2A" },
-                    headerTitleStyle: { color: "#E0E1DD" },
-                    headerTitleAlign: "center"
+                    headerShown: false
                 }}
             />
         </Tab.Navigator>

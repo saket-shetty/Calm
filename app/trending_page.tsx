@@ -1,13 +1,12 @@
 import { GetTrendingSongs, SongDetails } from '@/script/media_player_helper';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SongTiles from './component/song_tiles';
+import Header from './component/header';
 
 export const TrendingPage = () => {
     const [activeTab, setActiveTab] = useState<'English' | 'Hindi' | 'Global'>('English');
     const [scrolledToBottom, setScrolledToBottom] = useState(false)
-    const insets = useSafeAreaInsets();
     const [englishSongs, setEnglishSongs] = useState<SongDetails[]>([])
     const [hindiSongs, setHindiSongs] = useState<SongDetails[]>([])
     const [songs, setSongs] = useState<SongDetails[]>([])
@@ -51,9 +50,8 @@ export const TrendingPage = () => {
     );
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#0D1B2A', paddingTop: insets.top }} >
-            <Text style={styles.header}>Trending</Text>
-
+        <View style={{ flex: 1, backgroundColor: '#0D1B2A' }} >
+            <Header title='Trending' />
             <View style={styles.tabContainer}>
                 <TabButton name="English" />
                 <TabButton name="Hindi" />

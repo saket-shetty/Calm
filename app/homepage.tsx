@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { StyleSheet, TextInput, View } from "react-native";
 import { SearchSong, SongDetails } from "../script/media_player_helper";
 import SongTiles from "./component/song_tiles";
+import Header from "./component/header";
 
 export default function Homepage() {
     const [search, setSearch] = useState("");
@@ -16,6 +17,7 @@ export default function Homepage() {
 
     return (
         <View style={styles.container}>
+            <Header title="Home"/>
             <View style={styles.searchContainer}>
                 <TextInput
                     placeholder="Search..."

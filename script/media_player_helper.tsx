@@ -2,6 +2,7 @@ import { GetSongDetailsFromIDs } from "@/database/initialize_db";
 import CookieManager from '@react-native-cookies/cookies';
 import { File, Paths } from "expo-file-system";
 import { get_english_trending_songs, search_media_url, search_song_details_by_id, search_song_url } from "../endpoints/url";
+import { cache } from "@/global_cache/cache";
 
 export interface SongDetails {
     title: string,
@@ -106,6 +107,19 @@ export async function GetTrendingSongs(language: string): Promise<SongDetails[]>
 
     let AllTrendingSongs: SongDetails[] = []
 
+    const cache_songs = await cache.get(language)
+
+    if (cache_songs) {
+        try {
+            const json_trending_songs = (JSON.parse(cache_songs) as SongDetails[])
+            if (json_trending_songs && json_trending_songs.length > 0) {
+                return json_trending_songs
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
     try {
         const domain = "www.jiosaavn.com";
         await CookieManager.set(`https://${domain}`, {
@@ -141,6 +155,7 @@ export async function GetTrendingSongs(language: string): Promise<SongDetails[]>
     } catch (error) {
         console.error(error)
     } finally {
+        await cache.set(language, JSON.stringify(AllTrendingSongs))
         return AllTrendingSongs
     }
 }

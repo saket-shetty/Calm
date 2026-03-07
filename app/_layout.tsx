@@ -4,7 +4,9 @@ export default function RootLayout() {
     return <Stack >
         <Stack.Screen
             name="index"
-            options={{ title: "Calm", headerShown: false }}
+            options={{
+                headerShown: false
+            }}
         />
 
         <Stack.Screen
@@ -32,11 +34,6 @@ export default function RootLayout() {
         <Stack.Screen
             name="create_playlist"
             options={{
-                title: "Create Playlist",
-                headerStyle: { backgroundColor: "#0D1B2A" },
-                headerTitleStyle: { color: "#E0E1DD" },
-                headerTitleAlign: "center",
-                headerTintColor: "white",
                 headerShown: false,
             }}
         />
