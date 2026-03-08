@@ -51,3 +51,6 @@ android/**/*
 !android/app/build/outputs/apk/release/*
 
 !android/app/build/outputs/apk/release/baselineProfiles
+
+google-services.json
+.env

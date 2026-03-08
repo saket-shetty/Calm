@@ -4,7 +4,7 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "com.anonymous.Calm",
+  "applicationId": "com.saket.calm.app",
   "variantName": "release",
   "elements": [
     {
