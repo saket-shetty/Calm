@@ -1,129 +1,159 @@
 import { SongDetails } from "@/script/media_player_helper";
-import * as SQLite from "expo-sqlite";
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { GetUserIdFromCache } from "@/script/user_details";
 
-let db: SQLite.SQLiteDatabase | null = null;
-let initializationPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+let supabase: SupabaseClient<any, "public", "public", any, any> | null = null;
 
 export interface Playlist {
     id: number,
     playlist_name: string
 }
 
-/**
- * Ensures the database is initialized before any operation.
- * This prevents the "NativeDatabase.prepareAsync" rejected errors.
- */
-async function ensureDb(): Promise<SQLite.SQLiteDatabase> {
-    if (db) return db;
-    if (initializationPromise) return initializationPromise;
+async function GetSupabaseDB() {
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_HOST
+    const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
 
-    initializationPromise = (async () => {
-        const instance = await SQLite.openDatabaseAsync('calm.db');
-        // Enable WAL mode for better concurrency
-        await instance.execAsync('PRAGMA journal_mode = WAL;');
-        
-        // Use a transaction for table creation to ensure integrity
-        await instance.withTransactionAsync(async () => {
-            await instance.execAsync(`
-                CREATE TABLE IF NOT EXISTS song (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL,
-                    description TEXT NOT NULL,
-                    song_id TEXT NOT NULL UNIQUE,
-                    image_url TEXT NOT NULL,
-                    media_url TEXT
-                );
-                CREATE TABLE IF NOT EXISTS history (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    song_played_id INTEGER NOT NULL
-                );
-                CREATE TABLE IF NOT EXISTS favourite (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    song_played_id INTEGER NOT NULL UNIQUE
-                );
-                CREATE TABLE IF NOT EXISTS playlist (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    playlist_name TEXT NOT NULL UNIQUE
-                );
-                CREATE TABLE IF NOT EXISTS playlistsongs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    playlist_id INTEGER NOT NULL,
-                    song_id INTEGER NOT NULL
-                );
-            `);
-        });
-        db = instance;
-        return instance;
-    })();
-
-    return initializationPromise;
+    if (supabase) return supabase
+    if (supabaseUrl && supabaseKey) {
+        supabase = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                storage: AsyncStorage,
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: false,
+            },
+        })
+    }
+    return supabase
 }
 
-export async function CreateDatabase() {
-    await ensureDb();
+export async function InsertUserIntoDB(google_id: string, name: string, email: string, image_url: string) {
+    const spdb = await GetSupabaseDB()
+    if (spdb) {
+        const { data, error } = await spdb.from("calm_users").insert([
+            {
+                name: name,
+                email: email,
+                image_url: image_url,
+                id: google_id
+            },
+        ])
+
+        if (error) {
+            console.log("error", error);
+        } else {
+            console.log("log", data);
+        }
+    }
 }
 
 export async function InsertSong(title: string, description: string, song_id: string, image_url: string, media_url: string) {
-    const database = await ensureDb();
+
+    const spdb = await GetSupabaseDB()
     try {
-        const result = await database.runAsync(
-            "INSERT OR IGNORE INTO song (title, description, song_id, image_url, media_url) VALUES (?, ?, ?, ?, ?)",
-            [title, description, song_id, image_url, media_url]
-        );
+        if (spdb) {
+            const { data, error } = await spdb.from("song").insert([{
+                title: title,
+                description: description,
+                song_id: song_id,
+                image_url: image_url,
+                media_url: media_url
+            }])
 
-        if (result.changes === 0) {
-            console.log("Song already exists, skipping insert.");
-        } else {
-            console.log("New song inserted! ID:", result.lastInsertRowId);
+            if (error) {
+                console.log("error", error);
+            } else {
+                console.log("data", data);
+            }
+            await InsertSongInHistory(song_id);
         }
-
-        await InsertSongInHistory(song_id);
     } catch (error) {
         console.error("Insert failed:", error);
     }
 }
 
 async function InsertSongInHistory(song_id: string) {
-    const database = await ensureDb();
-    await database.runAsync(
-        `INSERT INTO history (song_played_id) 
-         SELECT id FROM song WHERE song_id = ?`,
-        [song_id]
-    );
+    const user_id = await GetUserIdFromCache()
+    const spdb = await GetSupabaseDB()
+    if (spdb) {
+        const { data, error } = await spdb.from("history").insert([{
+            user_id: user_id,
+            song_played_id: song_id,
+        }])
+
+        if (error) {
+            console.log("error", error);
+        } else {
+            console.log("data", data);
+        }
+    }
 }
 
 export async function GetSongHistory(offset: number): Promise<SongDetails[]> {
-    const database = await ensureDb();
-    const result = await database.getAllAsync<any>(`
-        SELECT S.* FROM history AS H
-        INNER JOIN song AS S
-        ON H.song_played_id = S.id
-        ORDER BY H.id DESC
-        LIMIT 15
-        OFFSET 15*?
-    `, offset);
+    const limit = 15;
+    const from = offset * limit;
+    const to = from + limit - 1;
 
-    return result.map(row => ({
-        title: row.title,
-        description: row.description,
-        id: row.song_id,
-        image: row.image_url,
-        media_url: row.media_url
-    }));
+    const spdb = await GetSupabaseDB()
+    const user_id = await GetUserIdFromCache()
+
+    if (!spdb) return []
+
+    const { data, error } = await spdb
+        .from('history')
+        .select(`
+            id,
+            song:song_played_id (
+                song_id,
+                title,
+                description,
+                image_url,
+                media_url
+            )
+        `)
+        .eq("user_id", user_id)
+        .order('id', { ascending: false })
+        .range(from, to);
+
+    if (error) {
+        console.error('Error fetching history:', error.message);
+        return [];
+    }
+
+    return (data || [])
+        .filter(row => row.song)
+        .map(row => {
+            const s = row.song as any;
+            return {
+                title: s.title,
+                description: s.description,
+                id: s.song_id,
+                image: s.image_url,
+                media_url: s.media_url
+            };
+        });
 }
 
 export async function GetMostPlayedSong(): Promise<SongDetails[]> {
-    const database = await ensureDb();
-    const result = await database.getAllAsync<any>(`
-        SELECT S.id, S.title, S.description, S.song_id, S.image_url, S.media_url, COUNT(1) AS C
-        FROM song AS S
-        INNER JOIN history AS H
-        ON S.id = H.song_played_id
-        GROUP BY S.id, S.title, S.description, S.song_id, S.image_url, S.media_url
-        ORDER BY C DESC
-    `);
+    const spdb = await GetSupabaseDB()
+    const user_id = await GetUserIdFromCache()
 
-    return result.map(row => ({
+    if (!spdb) return []
+
+    const { data, error } = await spdb
+        .from('user_most_played_songs')
+        .select('*')
+        .eq('user_id', user_id)
+        .order('play_count', { ascending: false })
+        .limit(10); // Adjust limit as needed
+
+    if (error) {
+        console.error('Error fetching top songs:', error.message);
+        return [];
+    }
+
+    return (data || []).map(row => ({
         title: row.title,
         description: row.description,
         id: row.song_id,
@@ -133,21 +163,42 @@ export async function GetMostPlayedSong(): Promise<SongDetails[]> {
 }
 
 export async function SetFavouriteSong(songId: string) {
-    const database = await ensureDb();
     try {
-        const result = await database.runAsync(
-            `INSERT OR IGNORE INTO favourite (song_played_id) 
-             SELECT id FROM song WHERE song_id = ?`,
-            [songId]
-        );
+        // 1. Keep your existing user_id fetch
+        const user_id = await GetUserIdFromCache();
+        const supabase = await GetSupabaseDB()
 
-        if (result.changes === 0) {
-            // Toggle off: if already favorite, remove it
-            await database.runAsync(
-                `DELETE FROM favourite WHERE song_played_id = (
-                 SELECT id FROM song WHERE song_id = ?)`,
-                [songId]
-            );
+        if (!supabase) return
+
+        // 2. Check if this song is already in the 'favourite' table
+        const { data: existing, error: fetchError } = await supabase
+            .from('favourite')
+            .select('id')
+            .eq('user_id', user_id)
+            .eq('song_played_id', songId)
+            .maybeSingle();
+
+        if (fetchError) throw fetchError;
+
+        if (existing) {
+            // 3. If it exists, DELETE it (Unfavourite)
+            const { error: deleteError } = await supabase
+                .from('favourite')
+                .delete()
+                .eq('user_id', user_id)
+                .eq('song_played_id', songId);
+
+            if (deleteError) throw deleteError;
+        } else {
+            // 4. If it doesn't exist, INSERT it (Favourite)
+            const { error: insertError } = await supabase
+                .from('favourite')
+                .insert([{
+                    user_id: user_id,
+                    song_played_id: songId
+                }]);
+
+            if (insertError) throw insertError;
         }
     } catch (error) {
         console.error("SetFavourite failed:", error);
@@ -155,53 +206,97 @@ export async function SetFavouriteSong(songId: string) {
 }
 
 export async function IsSongFavourite(songId: string): Promise<boolean> {
-    const database = await ensureDb();
-    const result = await database.getAllAsync<any>(`
-        SELECT S.song_id
-        FROM favourite AS F
-        INNER JOIN song AS S
-        ON S.id = F.song_played_id
-        WHERE S.song_id = ?
-    `, [songId]); // Wrapped in array to fix crash
+    const user_id = await GetUserIdFromCache();
+    const spdb = await GetSupabaseDB();
 
-    return result.length > 0;
+    if (!spdb || !user_id) return false;
+
+    const { data, error } = await spdb
+        .from('favourite')
+        .select('id')
+        .eq('user_id', user_id)
+        .eq('song_played_id', songId)
+        .maybeSingle();
+
+    if (error) {
+        console.error("IsSongFavourite error:", error.message);
+        return false;
+    }
+
+    return !!data;
 }
 
 export async function GetAllFavouriteSongs(): Promise<SongDetails[]> {
-    const database = await ensureDb();
-    const result = await database.getAllAsync<any>(`
-        SELECT S.id, S.title, S.description, S.song_id, S.image_url, S.media_url
-        FROM favourite AS F
-        INNER JOIN song AS S
-        ON S.id = F.song_played_id
-    `);
+    const user_id = await GetUserIdFromCache();
+    const spdb = await GetSupabaseDB();
 
-    return result.map(row => ({
-        title: row.title,
-        description: row.description,
-        id: row.song_id,
-        image: row.image_url,
-        media_url: row.media_url
-    }));
+    if (!spdb || !user_id) return [];
+
+    const { data, error } = await spdb
+        .from('favourite')
+        .select(`
+            song:song_played_id (
+                song_id,
+                title,
+                description,
+                image_url,
+                media_url
+            )
+        `)
+        .eq('user_id', user_id);
+
+    if (error) {
+        console.error("GetAllFavouriteSongs failed:", error.message);
+        return [];
+    }
+
+    return (data || [])
+        .filter(item => item.song)
+        .map(item => {
+            const s = item.song as any;
+            return {
+                title: s.title,
+                description: s.description,
+                id: s.song_id,
+                image: s.image_url,
+                media_url: s.media_url
+            };
+        });
 }
 
 export async function InsertNewPlaylist(playlistName: string) {
-    const database = await ensureDb();
+    const user_id = await GetUserIdFromCache();
+    const spdb = await GetSupabaseDB();
+
+    if (!spdb || !user_id) return;
+
     try {
-        await database.runAsync(
-            "INSERT OR IGNORE INTO playlist (playlist_name) VALUES (?)",
-            [playlistName]
-        );
+        const { error } = await spdb
+            .from('playlist')
+            .insert([
+                { playlist_name: playlistName, user_id: user_id }
+            ]);
+
+        if (error && error.code !== '23505') throw error;
     } catch (error) {
         console.error("Playlist insert failed:", error);
     }
 }
 
 export async function GetAllPlaylists(): Promise<Playlist[]> {
-    const database = await ensureDb();
+    const user_id = await GetUserIdFromCache();
+    const spdb = await GetSupabaseDB();
+
+    if (!spdb || !user_id) return [];
+
     try {
-        const result = await database.getAllAsync<any>("SELECT * FROM playlist");
-        return result.map(row => ({ id: row.id, playlist_name: row.playlist_name }));
+        const { data, error } = await spdb
+            .from('playlist')
+            .select('id, playlist_name')
+            .eq('user_id', user_id);
+
+        if (error) throw error;
+        return data.map(row => ({ id: row.id, playlist_name: row.playlist_name }));
     } catch (error) {
         console.error("Get playlists failed:", error);
         return [];
@@ -209,45 +304,58 @@ export async function GetAllPlaylists(): Promise<Playlist[]> {
 }
 
 export async function InsertSongInMultiplePlaylists(songId: string, playlistIds: number[]) {
-    const database = await ensureDb();
+    const spdb = await GetSupabaseDB();
+    if (!spdb) return;
+
     try {
-        const songRecord = await database.getFirstAsync<{ id: number }>(
-            'SELECT id FROM song WHERE song_id = ?',
-            [songId]
-        );
+        const insertData = playlistIds.map(pId => ({
+            playlist_id: pId,
+            song_id: songId
+        }));
 
-        if (!songRecord) return;
+        // Standard bulk insert
+        const { error } = await spdb
+            .from('playlistsongs')
+            .insert(insertData);
 
-        await database.withTransactionAsync(async () => {
-            for (const pId of playlistIds) {
-                await database.runAsync(
-                    `INSERT OR IGNORE INTO playlistsongs (playlist_id, song_id) VALUES (?, ?)`,
-                    [pId, songRecord.id]
-                );
-            }
-        });
+        if (error && error.code !== '23505') throw error;
     } catch (error) {
         console.error("Multi-insert failed:", error);
     }
 }
 
 export async function GetSongFromPerticularPlaylist(playlistId: number): Promise<SongDetails[]> {
-    const database = await ensureDb();
-    try {
-        const result = await database.getAllAsync<any>(`
-            SELECT S.* FROM playlistsongs AS PS
-            INNER JOIN song AS S
-            ON PS.song_id = S.id
-            WHERE playlist_id = ?
-        `, [playlistId]);
+    const spdb = await GetSupabaseDB();
+    if (!spdb) return [];
 
-        return result.map(row => ({
-            title: row.title,
-            description: row.description,
-            id: row.song_id,
-            image: row.image_url,
-            media_url: row.media_url
-        }));
+    try {
+        const { data, error } = await spdb
+            .from('playlistsongs')
+            .select(`
+                song:song_id (
+                    song_id,
+                    title,
+                    description,
+                    image_url,
+                    media_url
+                )
+            `)
+            .eq('playlist_id', playlistId);
+
+        if (error) throw error;
+
+        return (data || [])
+            .filter(row => row.song)
+            .map(row => {
+                const s = row.song as any;
+                return {
+                    title: s.title,
+                    description: s.description,
+                    id: s.song_id,
+                    image: s.image_url,
+                    media_url: s.media_url
+                };
+            });
     } catch (error) {
         console.error("Get songs from playlist failed:", error);
         return [];
@@ -255,48 +363,47 @@ export async function GetSongFromPerticularPlaylist(playlistId: number): Promise
 }
 
 export async function DeleteSongFromPlaylist(playlistId: number, songIds: string[]) {
-    const database = await ensureDb();
+    const spdb = await GetSupabaseDB();
+    if (!spdb) return;
+
     try {
-        await database.withTransactionAsync(async () => {
-            for (const sId of songIds) {
-                await database.runAsync(
-                    `DELETE FROM playlistsongs WHERE playlist_id=? AND song_id = (SELECT id FROM song WHERE song_id = ?)`,
-                    [playlistId, sId]
-                );
-            }
-        });
-        console.log("Delete successfully.")
+        const { error } = await spdb
+            .from('playlistsongs')
+            .delete()
+            .eq('playlist_id', playlistId)
+            .in('song_id', songIds); // Matches any ID in the array
+
+        if (error) throw error;
+        console.log("Deleted successfully.");
     } catch (error) {
-        console.error("Deletion failed :", error);
+        console.error("Deletion failed:", error);
     }
 }
 
 export async function GetSongDetailsFromIDs(songId: string): Promise<SongDetails> {
-    const database = await ensureDb();
+    const spdb = await GetSupabaseDB();
+    const emptySong = { title: "", description: "", id: "", image: "", media_url: "" };
+
+    if (!spdb) return emptySong;
 
     try {
-        const result = await database.getFirstAsync<any>(`
-            SELECT *
-            FROM song 
-            WHERE song_id = ?
-        `, songId);
+        const { data, error } = await spdb
+            .from('song')
+            .select('*')
+            .eq('song_id', songId)
+            .single();
+
+        if (error) throw error;
 
         return {
-            title: result.title,
-            description: result.description,
-            id: result.song_id,
-            image: result.image_url,
-            media_url: result.media_url
+            title: data.title,
+            description: data.description,
+            id: data.song_id,
+            image: data.image_url,
+            media_url: data.media_url
         };
-
     } catch (error) {
-        console.error("Get songs from playlist failed:", error);
-        return {
-            title: "",
-            description: "",
-            id: "",
-            image: "",
-            media_url: ""
-        };
+        console.error("Get song details failed:", error);
+        return emptySong;
     }
 }

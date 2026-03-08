@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ActivityIndicator, Alert, StatusBar } from 'react-native';
-import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import { GoogleSignin, GoogleSigninButton, SignInResponse, User } from '@react-native-google-signin/google-signin';
 import { getAuth, GoogleAuthProvider, signInWithCredential } from '@react-native-firebase/auth';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { cache } from '@/global_cache/cache';
+import { InsertUserIntoDB } from '@/database/initialize_db';
 
 export default function LoginScreen({ setIsUserLoggedIn }: { setIsUserLoggedIn: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [loading, setLoading] = useState(false);
@@ -18,11 +19,21 @@ export default function LoginScreen({ setIsUserLoggedIn }: { setIsUserLoggedIn: 
     }, []);
 
     const getTokenFromCache = async () => {
-        const token = await cache.get("login-token")
-        if (token) {
-            if (token !== ""){
+        const json_login_details = await cache.get("login-user-details")
+        if (json_login_details) {
+            const user = JSON.parse(json_login_details) as User
+            if (user && user.idToken !== "") {
                 setIsUserLoggedIn(true)
             }
+        }
+    }
+
+    const onSuccessfulLogin = async (userInfo: SignInResponse) => {
+        if (userInfo.data) {
+            setIsUserLoggedIn(true)
+            const us: User = userInfo.data
+            InsertUserIntoDB(us.user.id, us.user.name || "", us.user.email, us.user.photo || "")
+            await cache.set("login-user-details", JSON.stringify(us))
         }
     }
 
@@ -34,14 +45,12 @@ export default function LoginScreen({ setIsUserLoggedIn }: { setIsUserLoggedIn: 
             if (userInfo.data?.idToken) {
                 const credential = GoogleAuthProvider.credential(userInfo.data.idToken);
                 await signInWithCredential(auth, credential);
-                setIsUserLoggedIn(true)
-                await cache.set("login-token", userInfo.data.idToken)
+                onSuccessfulLogin(userInfo)
             }
         } catch (error) {
             console.error("Login Error:", error);
             Alert.alert('Login Failed', 'Unable to connect to Google.');
             setIsUserLoggedIn(false)
-            await cache.set("login-token", "")
         } finally {
             setLoading(false);
         }
@@ -51,7 +60,6 @@ export default function LoginScreen({ setIsUserLoggedIn }: { setIsUserLoggedIn: 
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
 
-            {/* Top Branding Section */}
             <SafeAreaView style={styles.headerSection}>
                 <View style={styles.logoWrapper}>
                     <Text style={styles.logoIcon}>🍃</Text>
@@ -60,13 +68,10 @@ export default function LoginScreen({ setIsUserLoggedIn }: { setIsUserLoggedIn: 
                 <Text style={styles.tagline}>Minimalist. Ad-free. Yours.</Text>
             </SafeAreaView>
 
-            {/* Bottom Card Section */}
             <View style={styles.footerCard}>
                 <View style={styles.handle} />
-
                 <Text style={styles.loginHeading}>Welcome back</Text>
                 <Text style={styles.loginSubheading}>Sync your playlist across all devices</Text>
-
                 <View style={styles.buttonContainer}>
                     {loading ? (
                         <ActivityIndicator size="large" color="#1DB954" />

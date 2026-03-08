@@ -128,7 +128,7 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
                     }}
                     contentContainerStyle={songList.length === 0 ? { flex: 1 } : renderstyle.listContent}
                     renderItem={renderSongItem}
-                    ListEmptyComponent={() => playlistName === "Trending" && <ActivityIndicator style={{ flex: 1 }} size="large" color="white" />}
+                    ListEmptyComponent={() => playlistName !== "" && <ActivityIndicator style={{ flex: 1 }} size="large" color="white" />}
                 />
             </View>
 

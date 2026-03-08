@@ -3,7 +3,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AudioModule } from "expo-audio";
 import { useEffect, useState } from "react";
 import Homepage from "./homepage";
-import { CreateDatabase } from "../database/initialize_db"
 import { useMusicStore } from "@/store/musicStore";
 import * as Notifications from 'expo-notifications';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -34,7 +33,6 @@ export default function Index() {
                 interruptionMode: "duckOthers",
                 shouldPlayInBackground: true,
             });
-            await CreateDatabase();
         };
         reset();
         setup();
