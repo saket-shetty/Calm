@@ -96,7 +96,7 @@ export default function MusicPlayer() {
 
     const DownloadSong = async () => {
         setIsDownloading(true)
-        await DownloadSongLocal(currentSong.id, currentSong.media_url)
+        await DownloadSongLocal(currentSong)
         setIsDownloading(false)
     }
 

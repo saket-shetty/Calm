@@ -1,4 +1,3 @@
-import { GetSongDetailsFromIDs } from "@/database/initialize_db";
 import CookieManager from '@react-native-cookies/cookies';
 import { File, Paths } from "expo-file-system";
 import { get_english_trending_songs, search_media_url, search_song_details_by_id, search_song_url } from "../endpoints/url";
@@ -66,18 +65,13 @@ async function GetMediaUrl(encrypted_media_url: string): Promise<string> {
 
 }
 
-export async function DownloadSongLocal(songId: string, mediaUrl: string) {
-
-    const songFile = new File(Paths.cache, `${songId}.m4a`);
-
-    console.log("Downloading", songFile);
-
+export async function DownloadSongLocal(song: SongDetails) {
+    const songFile = new File(Paths.cache, `${song.id}_-_${song.title}_-_${song.description}.m4a`);
     if (!songFile.exists) {
-        await File.downloadFileAsync(mediaUrl, songFile)
+        await File.downloadFileAsync(song.media_url, songFile)
     } else {
         console.log("Already downloaded.")
     }
-
     console.log("Download completed", songFile);
 }
 
@@ -90,14 +84,20 @@ export async function GetAllDownloadedSongs(): Promise<SongDetails[]> {
 
         for (const x of files) {
             if (x.uri.endsWith(".m4a")) {
-                const songIdFromFilename = x.name.split(".")[0]
-                let s: SongDetails = await GetSongDetailsFromIDs(songIdFromFilename)
-                s.media_url = x.uri
+                const song_file_name = x.name.split(".")[0]
+                const song_details = song_file_name.split("_-_")
+                let s: SongDetails = {
+                    id: song_details[0],
+                    title: song_details[1],
+                    description: song_details[2],
+                    image: "https://cdn-icons-png.flaticon.com/512/3043/3043665.png",
+                    media_url: x.uri
+                }
                 AllDownloadedSongs.push(s)
             }
         }
     } catch (error) {
-        console.error("Could not list cache:", error);
+        console.log("Could not list cache:", error);
     } finally {
         return AllDownloadedSongs
     }

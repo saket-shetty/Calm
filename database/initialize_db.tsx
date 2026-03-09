@@ -7,7 +7,8 @@ let supabase: SupabaseClient<any, "public", "public", any, any> | null = null;
 
 export interface Playlist {
     id: number,
-    playlist_name: string
+    playlist_name: string,
+    playlist_description: string
 }
 
 async function GetSupabaseDB() {
@@ -264,7 +265,7 @@ export async function GetAllFavouriteSongs(): Promise<SongDetails[]> {
         });
 }
 
-export async function InsertNewPlaylist(playlistName: string) {
+export async function InsertNewPlaylist(playlistName: string, playlistDescription: string) {
     const user_id = await GetUserIdFromCache();
     const spdb = await GetSupabaseDB();
 
@@ -274,7 +275,7 @@ export async function InsertNewPlaylist(playlistName: string) {
         const { error } = await spdb
             .from('playlist')
             .insert([
-                { playlist_name: playlistName, user_id: user_id }
+                { playlist_name: playlistName, user_id: user_id, playlist_description: playlistDescription }
             ]);
 
         if (error && error.code !== '23505') throw error;
@@ -292,13 +293,14 @@ export async function GetAllPlaylists(): Promise<Playlist[]> {
     try {
         const { data, error } = await spdb
             .from('playlist')
-            .select('id, playlist_name')
-            .eq('user_id', user_id);
+            .select('id, playlist_name, playlist_description')
+            .eq('user_id', user_id)
+            .order('id');
 
         if (error) throw error;
-        return data.map(row => ({ id: row.id, playlist_name: row.playlist_name }));
+        return data.map(row => ({ id: row.id, playlist_name: row.playlist_name, playlist_description: row.playlist_description }));
     } catch (error) {
-        console.error("Get playlists failed:", error);
+        console.log("Get playlists failed:", error);
         return [];
     }
 }
@@ -377,33 +379,5 @@ export async function DeleteSongFromPlaylist(playlistId: number, songIds: string
         console.log("Deleted successfully.");
     } catch (error) {
         console.error("Deletion failed:", error);
-    }
-}
-
-export async function GetSongDetailsFromIDs(songId: string): Promise<SongDetails> {
-    const spdb = await GetSupabaseDB();
-    const emptySong = { title: "", description: "", id: "", image: "", media_url: "" };
-
-    if (!spdb) return emptySong;
-
-    try {
-        const { data, error } = await spdb
-            .from('song')
-            .select('*')
-            .eq('song_id', songId)
-            .single();
-
-        if (error) throw error;
-
-        return {
-            title: data.title,
-            description: data.description,
-            id: data.song_id,
-            image: data.image_url,
-            media_url: data.media_url
-        };
-    } catch (error) {
-        console.error("Get song details failed:", error);
-        return emptySong;
     }
 }

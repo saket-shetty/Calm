@@ -19,13 +19,8 @@ export default function CreatePlaylistScreen() {
 
     const handleCreate = async () => {
         if (playlistName.trim().length === 0) return;
-
-        console.log('Creating playlist:', playlistName);
-
-        await InsertNewPlaylist(playlistName)
-
+        await InsertNewPlaylist(playlistName, description)
         setPlaylistName('');
-
         router.back()
     };
 

@@ -1,7 +1,7 @@
 import { GetAllPlaylists, Playlist } from "@/database/initialize_db";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { FlatList, StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Header from "./component/header";
 
 export default function Playlists() {
@@ -15,11 +15,14 @@ export default function Playlists() {
     );
 
     async function GetAllPList() {
-        let defaultPlist: Playlist[] = [{ id: -1, playlist_name: "History" }, { id: -1, playlist_name: "Most Played" }, { id: -1, playlist_name: "Favourites" }, { id: -1, playlist_name: "Downloaded Songs" }]
-        setPlaylists(defaultPlist)
-        const plist = await GetAllPlaylists()
-        defaultPlist.push(...plist)
-        setPlaylists(defaultPlist)
+        const plist = await GetAllPlaylists();
+        const defaultItems: Playlist[] = [
+            { id: -1, playlist_name: "History", playlist_description: "History of previously played songs." },
+            { id: -1, playlist_name: "Most Played", playlist_description: "Most played songs by you." },
+            { id: -1, playlist_name: "Favourites", playlist_description: "Songs that you have marked as favourite." },
+            { id: -1, playlist_name: "Downloaded Songs", playlist_description: "Songs that you can listen to offline." }
+        ];
+        setPlaylists([...defaultItems, ...plist]);
     }
 
     const renderPlaylistItem = ({ item }: { item: Playlist }) => (
@@ -32,7 +35,7 @@ export default function Playlists() {
             </View>
             <View style={styles.infoContainer}>
                 <Text style={styles.playlistName}>{item.playlist_name}</Text>
-                <Text style={styles.subtitle}>Playlist • {item.id}</Text>
+                <Text style={styles.subtitle}>{item.playlist_description}</Text>
             </View>
         </TouchableOpacity>
     );
