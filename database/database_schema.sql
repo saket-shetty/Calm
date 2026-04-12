@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS favourite (
 CREATE TABLE IF NOT EXISTS playlist (
     id SERIAL PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES calm_users(id) ON DELETE CASCADE,
-    playlist_name TEXT NOT NULL
+    playlist_name TEXT NOT NULL,
+    playlist_description TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS playlistsongs (

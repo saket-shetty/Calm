@@ -2,3 +2,4 @@ export const search_song_url: string = "https://www.jiosaavn.com/api.php?__call=
 export const search_song_details_by_id: string = "https://www.jiosaavn.com/api.php?__call=song.getDetails&api_version=4&_format=json&_marker=0&ctx=web6dot0&pids="
 export const search_media_url: string = "https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&url={ecrypted_media_url}&bitrate=128&api_version=4&_format=json&ctx=wap6dot0&_marker=0"
 export const get_english_trending_songs: string = "https://www.jiosaavn.com/api.php?__call=webapi.get&token=I3kvhipIy73uCJW60TJk1Q__&type=playlist&p=1&n=20&includeMetaTags=0&ctx=wap6dot0&api_version=4&_format=json&_marker=0"
+export const search_movie_url: string = "https://db.videasy.net/3/search/multi?language=en&page=1&query="

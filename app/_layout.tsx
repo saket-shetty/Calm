@@ -37,5 +37,12 @@ export default function RootLayout() {
                 headerShown: false,
             }}
         />
+
+        <Stack.Screen
+            name="movie_player"
+            options={{
+                headerShown: false,
+            }}
+        />
     </Stack>;
 }

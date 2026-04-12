@@ -9,6 +9,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import Playlist from "./playlist";
 import TrendingPage from "./trending_page";
 import LoginScreen from "./login";
+import SearchMovies from "./search_movies";
 
 const Tab = createBottomTabNavigator();
 
@@ -38,37 +39,46 @@ export default function Index() {
         setup();
     }, []);
 
-    return !isUserLoggedIn ? <LoginScreen setIsUserLoggedIn={setIsUserLoggedIn}/>
-    : (
-        <Tab.Navigator screenOptions={{
-            tabBarStyle: { backgroundColor: 'black', borderTopWidth: 0, elevation: 0 },
-        }}>
-            <Tab.Screen name="Calm" component={Homepage}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="musical-note" size={size} color={color} />
-                    ),
-                    headerShown: false
-                }}
-            />
+    return !isUserLoggedIn ? <LoginScreen setIsUserLoggedIn={setIsUserLoggedIn} />
+        : (
+            <Tab.Navigator screenOptions={{
+                tabBarStyle: { backgroundColor: 'black', borderTopWidth: 0, elevation: 0 },
+            }}>
+                <Tab.Screen name="Calm" component={Homepage}
+                    options={{
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="musical-note" size={size} color={color} />
+                        ),
+                        headerShown: false
+                    }}
+                />
 
-            <Tab.Screen name="Trending" component={TrendingPage}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="trending-up" size={size} color={color} />
-                    ),
-                    headerShown: false,
-                }}
-            />
+                {/* <Tab.Screen name="Trending" component={TrendingPage}
+                    options={{
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="trending-up" size={size} color={color} />
+                        ),
+                        headerShown: false,
+                    }}
+                /> */}
 
-            <Tab.Screen name="Playlist" component={Playlist}
-                options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="book" size={size} color={color} />
-                    ),
-                    headerShown: false
-                }}
-            />
-        </Tab.Navigator>
-    );
+                <Tab.Screen name="Playlist" component={Playlist}
+                    options={{
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="book" size={size} color={color} />
+                        ),
+                        headerShown: false
+                    }}
+                />
+
+                <Tab.Screen name="Movie" component={SearchMovies}
+                    options={{
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="tv" size={size} color={color} />
+                        ),
+                        headerShown: false
+                    }}
+                />
+            </Tab.Navigator>
+        );
 }

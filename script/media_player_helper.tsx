@@ -1,7 +1,7 @@
+import { cache } from "@/global_cache/cache";
 import CookieManager from '@react-native-cookies/cookies';
 import { File, Paths } from "expo-file-system";
-import { get_english_trending_songs, search_media_url, search_song_details_by_id, search_song_url } from "../endpoints/url";
-import { cache } from "@/global_cache/cache";
+import { get_english_trending_songs, search_media_url, search_movie_url, search_song_details_by_id, search_song_url } from "../endpoints/url";
 
 export interface SongDetails {
     title: string,
@@ -9,6 +9,14 @@ export interface SongDetails {
     id: string,
     image: string,
     media_url: string
+}
+
+export interface MovieDetails {
+    title: string,
+    description: string,
+    id: string,
+    image: string,
+    media_type: string
 }
 
 export async function SearchSong(songName: string): Promise<SongDetails[]> {
@@ -158,4 +166,27 @@ export async function GetTrendingSongs(language: string): Promise<SongDetails[]>
         await cache.set(language, JSON.stringify(AllTrendingSongs))
         return AllTrendingSongs
     }
+}
+
+
+export async function GetMovieDetails(movieTitle: string) {
+    const res = await fetch(search_movie_url + movieTitle)
+    const res_json = await res.json()
+    const MovieArray: MovieDetails[] = []
+
+    if (res_json && res_json["results"]) {
+        const res_song_data = res_json["results"]
+        for (let i = 0; i < res_song_data.length; i++) {
+            let Details: MovieDetails = {
+                title: res_song_data[i]["title"] || res_song_data[i]["name"],
+                description: res_song_data[i]["overview"],
+                id: res_song_data[i]["id"],
+                image: "https://image.tmdb.org/t/p/w342" + res_song_data[i]["poster_path"] + "&output=webp&q=50&n=-1",
+                media_type: res_song_data[i]["media_type"],
+            }
+
+            MovieArray.push(Details)
+        }
+    }
+    return MovieArray
 }
