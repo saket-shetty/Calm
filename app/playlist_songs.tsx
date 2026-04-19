@@ -75,7 +75,7 @@ export default function PlaylistSongs() {
     }, [scrolledToBottom])
 
     return (
-        <View style={{ flex: 1, paddingBottom: insets.bottom }}>
+        <View style={{ flex: 1, paddingBottom: insets.bottom, backgroundColor: '#121212' }}>
             <SongTiles
                 songList={songsList}
                 displayBanner={true}

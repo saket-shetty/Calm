@@ -126,6 +126,7 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
                             setScrolledToBottom(true)
                         }
                     }}
+                    keyboardShouldPersistTaps="always"
                     contentContainerStyle={songList.length === 0 ? { flex: 1 } : renderstyle.listContent}
                     renderItem={renderSongItem}
                     ListEmptyComponent={() => playlistName !== "" && <ActivityIndicator style={{ flex: 1 }} size="large" color="white" />}

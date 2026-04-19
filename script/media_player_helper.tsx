@@ -1,7 +1,7 @@
 import { cache } from "@/global_cache/cache";
 import CookieManager from '@react-native-cookies/cookies';
 import { File, Paths } from "expo-file-system";
-import { get_english_trending_songs, search_media_url, search_movie_url, search_song_details_by_id, search_song_url } from "../endpoints/url";
+import { get_english_trending_songs, get_trending_movies, search_media_url, search_movie_url, search_song_details_by_id, search_song_url } from "../endpoints/url";
 
 export interface SongDetails {
     title: string,
@@ -176,7 +176,10 @@ export async function GetMovieDetails(movieTitle: string) {
 
     if (res_json && res_json["results"]) {
         const res_song_data = res_json["results"]
-        for (let i = 0; i < res_song_data.length; i++) {
+        for (let i = 0; i < res_song_data.length && i < 10; i++) {
+            if (res_song_data[i]["media_type"] !== "movie" && res_song_data[i]["media_type"] !== "tv") {
+                continue
+            }
             let Details: MovieDetails = {
                 title: res_song_data[i]["title"] || res_song_data[i]["name"],
                 description: res_song_data[i]["overview"],
@@ -189,4 +192,103 @@ export async function GetMovieDetails(movieTitle: string) {
         }
     }
     return MovieArray
+}
+
+export async function GetTrendingMovies(): Promise<Map<string, MovieDetails[]>> {
+    const res = await fetch(get_trending_movies)
+    const res_json = await res.json()
+
+    const TrendingTopics = new Map<string, MovieDetails[]>();
+
+    if (res_json && res_json["pageProps"]) {
+        if (res_json["pageProps"]["trendingSections"]) {
+            const trendSec = res_json["pageProps"]["trendingSections"]
+            if (trendSec[0]["name"] == "popularMovies") {
+                const res = trendSec[0]["movies"]
+                const MovieArray: MovieDetails[] = []
+                for (let i = 0; i < res.length && i < 10; i++) {
+                    let Details: MovieDetails = {
+                        title: res[i]["title"],
+                        description: res[i]["description"],
+                        id: res[i]["id"],
+                        image: res[i]["poster"],
+                        media_type: "movie",
+                    }
+                    MovieArray.push(Details)
+                }
+                TrendingTopics.set("Trending Movies", MovieArray)
+            }
+
+            if (trendSec[1]["name"] == "popularShowTV") {
+                const res = trendSec[1]["movies"]
+                const MovieArray: MovieDetails[] = []
+                for (let i = 0; i < res.length && i < 10; i++) {
+                    let Details: MovieDetails = {
+                        title: res[i]["title"],
+                        description: res[i]["description"],
+                        id: res[i]["id"],
+                        image: res[i]["poster"],
+                        media_type: "tv",
+                    }
+                    MovieArray.push(Details)
+                }
+                TrendingTopics.set("Trending TV Shows", MovieArray)
+            }
+
+        }
+        
+        if (res_json["pageProps"]["defaultSections"]) {
+            const defaultSection = res_json["pageProps"]["defaultSections"]
+            if (defaultSection[0]["name"] === "trending") {
+                const res = defaultSection[0]["movies"]
+                const MovieArray: MovieDetails[] = []
+                for (let i = 0; i < res.length && i < 10; i++) {
+                    let Details: MovieDetails = {
+                        title: res[i]["title"],
+                        description: res[i]["description"],
+                        id: res[i]["id"],
+                        image: res[i]["poster"],
+                        media_type: res[i]["mediaType"],
+                    }
+                    MovieArray.push(Details)
+                }
+                TrendingTopics.set("TOP 10 Today", MovieArray)
+            }
+
+            if (defaultSection[2]["name"] === "topratedmovie") {
+                const res = defaultSection[2]["movies"]
+                const MovieArray: MovieDetails[] = []
+                for (let i = 0; i < res.length && i < 10; i++) {
+                    let Details: MovieDetails = {
+                        title: res[i]["title"],
+                        description: res[i]["description"],
+                        id: res[i]["id"],
+                        image: res[i]["poster"],
+                        media_type: res[i]["mediaType"],
+                    }
+                    MovieArray.push(Details)
+                }
+                TrendingTopics.set("Top rated movies", MovieArray)
+            }
+
+            if (defaultSection[3]["name"] === "topratedtv") {
+                const res = defaultSection[3]["movies"]
+                const MovieArray: MovieDetails[] = []
+                for (let i = 0; i < res.length && i < 10; i++) {
+                    let Details: MovieDetails = {
+                        title: res[i]["title"],
+                        description: res[i]["description"],
+                        id: res[i]["id"],
+                        image: res[i]["poster"],
+                        media_type: res[i]["mediaType"],
+                    }
+                    MovieArray.push(Details)
+                }
+                TrendingTopics.set("Top rated TV Shows", MovieArray)
+            }
+        }
+    
+    }
+
+    return TrendingTopics
 }

@@ -5,7 +5,7 @@ export const cache = new Cache({
     namespace: "myapp",
     policy: {
         maxEntries: 100,
-        stdTTL: 86400
+        stdTTL: 7 * 86400
     },
     backend: AsyncStorage
 });

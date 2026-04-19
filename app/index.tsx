@@ -53,6 +53,15 @@ export default function Index() {
                     }}
                 />
 
+                <Tab.Screen name="Movie" component={SearchMovies}
+                    options={{
+                        tabBarIcon: ({ color, size }) => (
+                            <Ionicons name="tv" size={size} color={color} />
+                        ),
+                        headerShown: false
+                    }}
+                />
+
                 {/* <Tab.Screen name="Trending" component={TrendingPage}
                     options={{
                         tabBarIcon: ({ color, size }) => (
@@ -71,14 +80,6 @@ export default function Index() {
                     }}
                 />
 
-                <Tab.Screen name="Movie" component={SearchMovies}
-                    options={{
-                        tabBarIcon: ({ color, size }) => (
-                            <Ionicons name="tv" size={size} color={color} />
-                        ),
-                        headerShown: false
-                    }}
-                />
             </Tab.Navigator>
         );
 }
