@@ -1,7 +1,7 @@
 import { cache } from "@/global_cache/cache";
 import CookieManager from '@react-native-cookies/cookies';
 import { File, Paths } from "expo-file-system";
-import { get_english_trending_songs, get_trending_movies, search_media_url, search_movie_url, search_song_details_by_id, search_song_url } from "../endpoints/url";
+import { cineby_url, get_english_trending_songs, get_trending_movies, search_media_url, search_movie_url, search_song_details_by_id, search_song_url } from "../endpoints/url";
 
 export interface SongDetails {
     title: string,
@@ -195,7 +195,8 @@ export async function GetMovieDetails(movieTitle: string) {
 }
 
 export async function GetTrendingMovies(): Promise<Map<string, MovieDetails[]>> {
-    const res = await fetch(get_trending_movies)
+    const buildId = await GetCinebySourceCode()
+    const res = await fetch(get_trending_movies.replaceAll("build_id", buildId))
     const res_json = await res.json()
 
     const TrendingTopics = new Map<string, MovieDetails[]>();
@@ -291,4 +292,13 @@ export async function GetTrendingMovies(): Promise<Map<string, MovieDetails[]>> 
     }
 
     return TrendingTopics
+}
+
+async function GetCinebySourceCode(): Promise<string> {
+
+    const html = await fetch(cineby_url).then(r => r.text());
+
+    const buildId = (html.match(/"buildId":"(.*?)"/)?.[1] as string)
+
+    return buildId
 }
