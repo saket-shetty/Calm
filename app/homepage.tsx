@@ -1,19 +1,31 @@
-import React, { useState } from "react";
-import { StyleSheet, TextInput, View } from "react-native";
-import { SearchSong, SongDetails } from "../script/media_player_helper";
-import SongTiles from "./component/song_tiles";
+import { useFocusEffect } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { FlatList, Image, StyleSheet, Text, TextInput, View } from "react-native";
+import { GetNewReleases, SearchSong, SongDetails } from "../script/media_player_helper";
 import Header from "./component/header";
+import SongTiles from "./component/song_tiles";
 
 export default function Homepage() {
     const [search, setSearch] = useState("");
     const [songDetails, setSongDetails] = useState<SongDetails[]>([]);
     const [scrolledToBottom, setScrolledToBottom] = useState(false)
+    const [NewReleaseSongs, SetNewReleaseSongs] = useState<Map<string, SongDetails[]>>()
 
     const OnSongSearch = async (songName: string) => {
         setSearch(songName);
         const details = await SearchSong(songName);
         setSongDetails(details);
     };
+
+    useEffect(() => {
+        fetchNewRelease()
+    }, [])
+
+    const fetchNewRelease = async () => {
+        console.log("asked details");
+        SetNewReleaseSongs(await GetNewReleases())
+        console.log("got details");
+    }
 
     return (
         <View style={styles.container}>
@@ -33,11 +45,12 @@ export default function Homepage() {
             <SongTiles
                 songList={songDetails}
                 displayBanner={true}
-                autoplay={false}
+                autoplay={songDetails.length !== 0 ? false : true}
                 playlistId={-1}
                 playlistName=""
                 scrolledToBottom={scrolledToBottom}
                 setScrolledToBottom={setScrolledToBottom}
+                newSongsMap={NewReleaseSongs}
             />
         </View>
     );
@@ -46,6 +59,7 @@ export default function Homepage() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#0D1B2A'
     },
 
     searchSection: {

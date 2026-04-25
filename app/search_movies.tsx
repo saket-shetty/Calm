@@ -61,7 +61,7 @@ export default function SearchMovies() {
             <FlatList
                 data={movies}
                 keyExtractor={(_, i) => i.toString()}
-                // contentContainerStyle={movies.length === 0  ? { flex: 1 } : renderstyle.listContent}
+                contentContainerStyle={movies.length === 0  ? { flex: 1 } : renderstyle.listContent}
                 keyboardShouldPersistTaps="always"
                 renderItem={renderMovieItem}
                 style={{

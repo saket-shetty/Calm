@@ -5,3 +5,4 @@ export const get_english_trending_songs: string = "https://www.jiosaavn.com/api.
 export const search_movie_url: string = "https://db.videasy.net/3/search/multi?language=en&page=1&query="
 export const get_trending_movies: string = "https://www.cineby.sc/_next/data/build_id/en.json"
 export const cineby_url: string = "https://www.cineby.sc/"
+export const get_new_release_songs: string = "https://www.jiosaavn.com/api.php?__call=content.getAlbums&api_version=4&_format=json&_marker=0&n=50&p=1&ctx=wap6dot0&languages="

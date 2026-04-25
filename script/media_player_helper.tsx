@@ -1,7 +1,7 @@
 import { cache } from "@/global_cache/cache";
 import CookieManager from '@react-native-cookies/cookies';
 import { File, Paths } from "expo-file-system";
-import { cineby_url, get_english_trending_songs, get_trending_movies, search_media_url, search_movie_url, search_song_details_by_id, search_song_url } from "../endpoints/url";
+import { cineby_url, get_english_trending_songs, get_new_release_songs, get_trending_movies, search_media_url, search_movie_url, search_song_details_by_id, search_song_url } from "../endpoints/url";
 
 export interface SongDetails {
     title: string,
@@ -237,7 +237,7 @@ export async function GetTrendingMovies(): Promise<Map<string, MovieDetails[]>> 
             }
 
         }
-        
+
         if (res_json["pageProps"]["defaultSections"]) {
             const defaultSection = res_json["pageProps"]["defaultSections"]
             if (defaultSection[0]["name"] === "trending") {
@@ -288,7 +288,7 @@ export async function GetTrendingMovies(): Promise<Map<string, MovieDetails[]>> 
                 TrendingTopics.set("Top rated TV Shows", MovieArray)
             }
         }
-    
+
     }
 
     return TrendingTopics
@@ -301,4 +301,49 @@ async function GetCinebySourceCode(): Promise<string> {
     const buildId = (html.match(/"buildId":"(.*?)"/)?.[1] as string)
 
     return buildId
+}
+
+export async function GetNewReleases(): Promise<Map<string, SongDetails[]>> {
+    const NewReleaseSongs = new Map<string, SongDetails[]>();
+
+    let data = await GetNewReleaseFromLanguage("english")
+    NewReleaseSongs.set("English New Release", data)
+
+    data = await GetNewReleaseFromLanguage("hindi")
+    NewReleaseSongs.set("Hindi New Release", data)
+
+    return NewReleaseSongs
+}
+
+async function GetNewReleaseFromLanguage(lang: string): Promise<SongDetails[]> {
+
+    let NewReleasesSongs: SongDetails[] = []
+
+    const res = await fetch(get_new_release_songs + lang)
+
+    const res_json = await res.json()
+
+    if (res_json && res_json["data"]) {
+        const songData = res_json["data"]
+        for (let i = 0; i < songData.length; i++) {
+            
+            if (songData[i]["type"] !== "song") {
+                continue
+            }
+
+            let song: SongDetails = {
+                title: songData[i]["title"],
+                description: songData[i]["subtitle"],
+                id: songData[i]["id"],
+                image: songData[i]["image"],
+                media_url: ""
+            }
+            NewReleasesSongs.push(song)
+            if (NewReleasesSongs.length == 10) {
+                break
+            }
+        }
+    }
+
+    return NewReleasesSongs
 }

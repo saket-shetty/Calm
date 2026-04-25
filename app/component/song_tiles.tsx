@@ -1,15 +1,15 @@
-import { InsertSong, DeleteSongFromPlaylist } from "@/database/initialize_db";
+import { DeleteSongFromPlaylist, InsertSong } from "@/database/initialize_db";
 import { SearchSongDetailsByID, SongDetails } from "@/script/media_player_helper";
 import { useMusicStore } from "@/store/musicStore";
+import { MaterialIcons } from '@expo/vector-icons';
+import { useNavigation } from "@react-navigation/native";
 import { AudioStatus } from "expo-audio";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from "@react-navigation/native";
 
 
-export default function SongTiles({ songList, displayBanner = true, autoplay = false, playlistId = -1, playlistName, setScrolledToBottom, scrolledToBottom }: { songList: SongDetails[], displayBanner: boolean, autoplay: boolean, playlistId: number, playlistName: string, setScrolledToBottom: React.Dispatch<React.SetStateAction<boolean>>, scrolledToBottom: boolean }) {
+export default function SongTiles({ songList, newSongsMap = new Map(), displayBanner = true, autoplay = false, playlistId = -1, playlistName, setScrolledToBottom, scrolledToBottom }: { songList: SongDetails[], newSongsMap: Map<string, SongDetails[]> | undefined, displayBanner: boolean, autoplay: boolean, playlistId: number, playlistName: string, setScrolledToBottom: React.Dispatch<React.SetStateAction<boolean>>, scrolledToBottom: boolean }) {
     const [loadingSong, setLoadingSong] = useState<boolean>(false);
     const currentSong = useMusicStore((state) => state.currentSong);
     const currentIndex = useMusicStore((state) => state.currentIndex);
@@ -19,6 +19,7 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
     const navigation = useNavigation();
     const [selectedSongToDelete, setSelectedSongToDelete] = useState<string[]>([]);
     const [showDeleteRadioButton, setShowDeleteRadioButton] = useState<boolean>(false);
+    const [songNewReleaseList, setSongNewReleaseList] = useState<SongDetails[]>([])
 
     const toggleSelect = (id: string) => {
         setSelectedSongToDelete(prev =>
@@ -46,12 +47,13 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
 
     useEffect(() => {
         if (!sound) return;
-
         const handleSongEnd = (s: AudioStatus) => {
             if (!s.didJustFinish || !autoplay) return
             const nextIndex = currentIndex + 1;
             if (songList[nextIndex]) {
                 playSong(nextIndex, true);
+            } else if (songNewReleaseList && songNewReleaseList[nextIndex]) {
+                playNewReleaseSong(nextIndex, true, songNewReleaseList)
             }
         };
 
@@ -63,6 +65,40 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
     }, [sound, currentIndex]);
 
     const playSong = async (i: number, autoplay: boolean = false) => {
+        if (loadingRef.current) return;
+        setLoadingSong(true);
+        try {
+            const storeSong = useMusicStore.getState().currentSong;
+            const song = songList[i]
+            // If the song is already playing, just navigate to the player
+            if (storeSong && storeSong.id === song.id) {
+                router.push({ pathname: "/music_player" });
+                setLoadingSong(false)
+                return;
+            }
+
+            let mediaUrl: string = song.media_url
+            if (mediaUrl === "") {
+                mediaUrl = await SearchSongDetailsByID(song.id);
+                song.media_url = mediaUrl;
+                songList[i] = song;
+            }
+
+            setSong(i, songList);
+            if (song) {
+                InsertSong(song.title, song.description, song.id, song.image, song.media_url)
+            }
+            if (!autoplay) {
+                router.push({ pathname: "/music_player" });
+            }
+        } catch (error) {
+            console.error("Failed to play song:", error);
+        } finally {
+            setLoadingSong(false);
+        }
+    };
+
+    const playNewReleaseSong = async (i: number, autoplay: boolean = false, songList: SongDetails[]) => {
         if (loadingRef.current) return;
         setLoadingSong(true);
         try {
@@ -115,23 +151,71 @@ export default function SongTiles({ songList, displayBanner = true, autoplay = f
         </TouchableOpacity>
     );
 
+    const TrendingTopicMediaList = ({ data }: { data: Map<string, SongDetails[]> }) => {
+        return (
+            <FlatList
+                data={Array.from(data.entries())}
+                keyExtractor={([key]) => key}
+                renderItem={({ item }) => {
+                    const [topic, movies] = item;
+
+                    return (
+                        <View style={{ marginBottom: 20 }}>
+                            <Text style={topicStyles.topicTitle}>{topic}</Text>
+
+                            <FlatList
+                                data={movies}
+                                horizontal
+                                keyExtractor={(m) => m.id}
+                                showsHorizontalScrollIndicator={false}
+                                renderItem={({ item, index }) => (
+                                    <TouchableOpacity
+                                        style={topicStyles.card}
+                                        onPress={() => {
+                                            setSongNewReleaseList(movies)
+                                            playNewReleaseSong(index, false, movies)
+                                        }}>
+                                        <Image
+                                            source={{ uri: item.image }}
+                                            style={topicStyles.image} />
+                                        <Text
+                                            style={topicStyles.title}
+                                            numberOfLines={1}>
+                                            {item.title}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                            />
+                        </View>
+                    );
+                }}
+            />
+        );
+    };
+
     return (
         <>
-            <View style={styles.content}>
-                <FlatList
-                    data={songList}
-                    keyExtractor={(_, i) => i.toString()}
-                    onEndReached={() => {
-                        if (songList.length >= 15) {
-                            setScrolledToBottom(true)
-                        }
-                    }}
-                    keyboardShouldPersistTaps="always"
-                    contentContainerStyle={songList.length === 0 ? { flex: 1 } : renderstyle.listContent}
-                    renderItem={renderSongItem}
-                    ListEmptyComponent={() => playlistName !== "" && <ActivityIndicator style={{ flex: 1 }} size="large" color="white" />}
-                />
-            </View>
+            {songList.length > 0 && (
+                <View style={styles.content}>
+                    <FlatList
+                        data={songList}
+                        keyExtractor={(_, i) => i.toString()}
+                        onEndReached={() => {
+                            if (songList.length >= 15) {
+                                setScrolledToBottom(true)
+                            }
+                        }}
+                        keyboardShouldPersistTaps="always"
+                        contentContainerStyle={songList.length === 0 ? { flex: 1 } : renderstyle.listContent}
+                        renderItem={renderSongItem}
+                        ListEmptyComponent={() => playlistName !== "" && <ActivityIndicator style={{ flex: 1 }} size="large" color="white" />}
+                    />
+                </View>
+            )}
+
+            {songList.length === 0 && newSongsMap && (
+                <TrendingTopicMediaList data={newSongsMap} />
+            )}
 
             {currentSong && displayBanner && (
                 <TouchableOpacity
@@ -210,4 +294,29 @@ const renderstyle = StyleSheet.create({
     title: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
     description: { color: '#b3b3b3', fontSize: 13, marginTop: 4 },
     empty: { color: '#fff', textAlign: 'center', marginTop: 50 },
+});
+
+const topicStyles = StyleSheet.create({
+    topicTitle: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        marginLeft: 15
+    },
+    card: {
+        marginLeft: 15,
+        width: 120
+    },
+    image: {
+        width: 120,
+        height: 160,
+        borderRadius: 10,
+        backgroundColor: '#333'
+    },
+    title: {
+        color: '#fff',
+        marginTop: 6,
+        fontSize: 13
+    }
 });
