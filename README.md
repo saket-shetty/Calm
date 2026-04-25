@@ -1,7 +1,19 @@
 # Calm
-## Where music plays freely and nothing gets in the way
+## Unlimited movies and music, zero ads, zero interruptions—just pure entertainment, free.
 
-Try our android app now: [Android](https://github.com/saket-shetty/Calm/raw/master/android/app/build/outputs/apk/release/app-release.apk)
+## Download our android app now: [Android](https://github.com/saket-shetty/Calm/raw/master/android/app/build/outputs/apk/release/app-release.apk)
+
+<table>
+  <tr>
+    <td><img src="screenshots/login.jpeg" width="180" height="400"></td>
+     <td><img src="screenshots/homepage.jpeg" width="180" height="400"></td>
+     <td><img src="screenshots/movies.jpeg" width="180" height="400"></td>
+  </tr>
+    <tr>
+     <td><img src="screenshots/playsong.jpeg" width="180" height="400"></td>
+     <td><img src="screenshots/playlist.jpeg" width="180" height="400"></td>
+   </tr>
+</table>
 
 ## To work with the codebase follow the below steps 
 
