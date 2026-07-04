@@ -2,7 +2,7 @@ export const search_song_url: string = "https://www.jiosaavn.com/api.php?__call=
 export const search_song_details_by_id: string = "https://www.jiosaavn.com/api.php?__call=song.getDetails&api_version=4&_format=json&_marker=0&ctx=web6dot0&pids="
 export const search_media_url: string = "https://www.jiosaavn.com/api.php?__call=song.generateAuthToken&url={ecrypted_media_url}&bitrate=128&api_version=4&_format=json&ctx=wap6dot0&_marker=0"
 export const get_english_trending_songs: string = "https://www.jiosaavn.com/api.php?__call=webapi.get&token=I3kvhipIy73uCJW60TJk1Q__&type=playlist&p=1&n=20&includeMetaTags=0&ctx=wap6dot0&api_version=4&_format=json&_marker=0"
-export const search_movie_url: string = "https://db.videasy.to/3/search/multi?language=en&page=1&query="
+export const search_movie_url: string = "https://db.wingsdatabase.to/3/search/multi?language=en&page=1&query="
 export const get_trending_movies: string = "https://www.cineby.sc/_next/data/build_id/en.json"
 export const cineby_url: string = "https://www.cineby.sc/"
 export const get_new_release_songs: string = "https://www.jiosaavn.com/api.php?__call=content.getAlbums&api_version=4&_format=json&_marker=0&n=50&p=1&ctx=wap6dot0&languages="
