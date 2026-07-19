@@ -20,9 +20,9 @@ export default function App() {
     useEffect(() => {
         let customize_uri: string = ""
         if (media_type === "tv") {
-            customize_uri = "https://www.vidking.net/embed/tv/" + movie_id + "/1/1?color=9146ff&autoPlay=true&nextEpisode=true&episodeSelector=true"
+            customize_uri = "https://www.cineby.at/tv/" + movie_id + "/1/1?color=9146ff&play=true&nextEpisode=true&episodeSelector=true"
         } else {
-            customize_uri = "https://www.vidking.net/embed/movie/" + movie_id + "?color=9146ff&autoPlay=true"
+            customize_uri = "https://www.cineby.at/movie/" + movie_id + "?color=9146ff&play=true"
         }
         setURI(customize_uri)
     }, []);
